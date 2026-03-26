@@ -333,7 +333,6 @@ fun BudgetScreen() {
     }
 
     //dialogs
-
     if (showDatePicker) {
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },

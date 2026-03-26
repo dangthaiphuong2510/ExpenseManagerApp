@@ -15,6 +15,9 @@ sealed class AppDestination(val route: String) {
     /** Home screen */
     object Home : AppDestination("home")
 
+    object History : AppDestination("history")
+
+
     /** Budget screen */
     object Budget : AppDestination("budget")
 

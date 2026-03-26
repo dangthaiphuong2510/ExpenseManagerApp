@@ -34,4 +34,9 @@ object AppIcons {
     val More = Icons.Rounded.MoreVert
     val Notifications = Icons.Rounded.Notifications
     val Info = Icons.Rounded.Info
+
+    val CategoryIconsList = listOf(
+        Food, Transport, Clothes, Cosmetics, Education,
+        Home, Health, Salary, Shopping, Bill, Other, Info
+    )
 }

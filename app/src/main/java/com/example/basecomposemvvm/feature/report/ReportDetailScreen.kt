@@ -30,7 +30,7 @@ fun ReportDetailScreen(
 
     val months = listOf("Oct", "Nov", "Dec", "Feb", "Jan", "Current")
     val mockData = remember {
-        months.map { it to Random.nextLong(500000, 3000000) }
+        months.map { it to Random.nextDouble(500000.0, 3000000.0) }
     }
     val maxAmount = mockData.maxOf { it.second }.toFloat()
 

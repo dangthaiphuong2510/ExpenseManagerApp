@@ -18,6 +18,9 @@ appcompat = "1.7.0"
 hilt = "2.51.1"
 hiltExt = "1.2.0"
 
+# Data
+room = "2.6.1"
+
 # Network
 retrofit = "2.11.0"
 okhttp = "4.12.0"
@@ -79,6 +82,11 @@ retrofit-converter-moshi = { group = "com.squareup.retrofit2", name = "converter
 # Network - OkHttp
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
+
+# Data
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 
 # JSON - Moshi
 moshi-kotlin = { group = "com.squareup.moshi", name = "moshi-kotlin", version.ref = "moshi" }
