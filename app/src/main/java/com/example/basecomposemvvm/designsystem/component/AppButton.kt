@@ -5,7 +5,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.basecomposemvvm.designsystem.theme.AppThemePreview
+import com.example.basecomposemvvm.designsystem.theme.AppTheme
 
 @Composable
 fun AppButton(
@@ -26,7 +26,7 @@ fun AppButton(
 @Preview(showBackground = true)
 @Composable
 private fun AppButtonPreview() {
-    AppThemePreview {
+    AppTheme {
         AppButton(text = "Click me", onClick = {})
     }
 }

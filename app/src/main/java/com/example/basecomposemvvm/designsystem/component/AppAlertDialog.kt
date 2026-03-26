@@ -6,7 +6,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.basecomposemvvm.designsystem.theme.AppThemePreview
+import com.example.basecomposemvvm.designsystem.theme.AppTheme
 
 @Composable
 fun AppAlertDialog(
@@ -33,7 +33,7 @@ fun AppAlertDialog(
 @Preview(showBackground = true)
 @Composable
 private fun AppAlertDialogPreview() {
-    AppThemePreview {
+    AppTheme {
         AppAlertDialog(
             title = "Error",
             content = "Something went wrong",

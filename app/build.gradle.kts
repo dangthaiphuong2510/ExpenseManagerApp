@@ -99,6 +99,9 @@ dependencies {
     debugImplementation(libs.chucker.debug)
     releaseImplementation(libs.chucker.release)
 
+    //Icon
+    implementation("androidx.compose.material:material-icons-extended")
+
     // Image
     implementation(libs.coil.compose)
 

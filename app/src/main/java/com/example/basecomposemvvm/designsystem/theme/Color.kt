@@ -2,22 +2,17 @@ package com.example.basecomposemvvm.designsystem.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary
-val Primary = Color(0xFF1A73E8)
-val OnPrimary = Color(0xFFFFFFFF)
+val OrangePrimary = Color(0xFFEA7A65)
 
-// Secondary
-val Secondary = Color(0xFF03DAC6)
-val OnSecondary = Color(0xFF000000)
+val BackgroundApp = Color(0xFFEFEFEF)
+val CardWhite = Color(0xFFFFFFFF)
 
-// Background
-val Background = Color(0xFFFAFAFA)
-val OnBackground = Color(0xFF1C1B1F)
+val TextPrimary = Color(0xFF2D3436)
+val TextSecondary = Color(0xFF767C81)
 
-// Surface
-val Surface = Color(0xFFFFFFFF)
-val OnSurface = Color(0xFF1C1B1F)
+val DividerLight = Color(0xFFF1F2F6)
 
-// Error
-val Error = Color(0xFFB3261E)
-val OnError = Color(0xFFFFFFFF)
+val OrangeLight = Color(0xFFFFE5D0)
+val BrownSoft = Color(0xFFA68479)
+val IncomeGreen = Color(0xFF2ECC71)
+val ExpenseRed = Color(0xFFE74C3C)

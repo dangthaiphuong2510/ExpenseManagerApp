@@ -4,22 +4,36 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.navigation.compose.rememberNavController
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.lightColorScheme
 import com.example.basecomposemvvm.core.navigation.AppNavigation
 import com.example.basecomposemvvm.designsystem.theme.AppTheme
-import dagger.hilt.android.AndroidEntryPoint
+import com.example.basecomposemvvm.designsystem.theme.BackgroundApp
+import com.example.basecomposemvvm.designsystem.theme.CardWhite
+import com.example.basecomposemvvm.designsystem.theme.OrangePrimary
+import com.example.basecomposemvvm.designsystem.theme.TextPrimary
 
-@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        actionBar?.hide()
+
+        enableEdgeToEdge()
+
         setContent {
             AppTheme {
-                AppNavigation(navController = rememberNavController())
+                MaterialTheme(
+                    colorScheme = lightColorScheme(
+                        primary = OrangePrimary,
+                        background = BackgroundApp,
+                        surface = CardWhite,
+                        onBackground = TextPrimary,
+                        onSurface = TextPrimary
+                    )
+                ) {
+                    AppNavigation()
+                }
             }
         }
     }

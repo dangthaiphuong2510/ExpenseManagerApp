@@ -1,32 +1,40 @@
 package com.example.basecomposemvvm.designsystem.theme
 
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 
 private val LightColorScheme = lightColorScheme(
-    primary = Primary,
-    onPrimary = OnPrimary,
-    secondary = Secondary,
-    onSecondary = OnSecondary,
-    background = Background,
-    onBackground = OnBackground,
-    surface = Surface,
-    onSurface = OnSurface,
-    error = Error,
-    onError = OnError,
+
+    //MAIN
+    primary = OrangePrimary,
+    onPrimary = CardWhite,
+
+    //BACKGROUND
+    background = BackgroundApp,
+    onBackground = TextPrimary,
+
+    //SURFACE (Card, BottomNav,...)
+    surface = CardWhite,
+    onSurface = TextPrimary,
+
+    //SUB TEXT
+    onSurfaceVariant = TextSecondary,
+
+    //BORDER / DIVIDER
+    surfaceVariant = DividerLight,
+
+    //ERROR (expense đỏ)
+    error = Color(0xFFE74C3C)
 )
 
 @Composable
-fun AppTheme(content: @Composable () -> Unit) {
+fun AppTheme(
+    content: @Composable () -> Unit
+) {
     MaterialTheme(
         colorScheme = LightColorScheme,
         typography = AppTypography,
-        content = content,
+        content = content
     )
-}
-
-@Composable
-fun AppThemePreview(content: @Composable () -> Unit) {
-    AppTheme(content = content)
 }

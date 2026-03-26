@@ -6,7 +6,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.basecomposemvvm.designsystem.theme.AppThemePreview
+import com.example.basecomposemvvm.designsystem.theme.AppTheme
 
 @Composable
 fun AppScaffold(
@@ -30,7 +30,7 @@ fun AppScaffold(
 @Preview(showBackground = true)
 @Composable
 private fun AppScaffoldPreview() {
-    AppThemePreview {
+    AppTheme {
         AppScaffold(
             topBar = { AppTopBar(title = "Preview") },
         ) { _ -> }

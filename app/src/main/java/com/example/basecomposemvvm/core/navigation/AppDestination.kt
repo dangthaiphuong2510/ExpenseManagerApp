@@ -2,26 +2,28 @@ package com.example.basecomposemvvm.core.navigation
 
 import androidx.navigation.NamedNavArgument
 
-/**
- * Sealed class representing all navigation destinations in the app.
- *
- * Each destination defines its route, optional arguments, and parcelable argument support.
- * New screens should be added as objects or data classes extending AppDestination.
- */
-sealed class AppDestination(val route: String = "") {
+sealed class AppDestination(val route: String) {
 
     open val arguments: List<NamedNavArgument> = emptyList()
 
-    open var destination: String = route
+    /** Navigate up / back */
+    object Up : AppDestination("up")
 
-    open var parcelableArgument: Pair<String, Any?> = "" to null
+    /** Splash screen */
+    object Splash : AppDestination("splash")
 
-    /** Navigate up / back in the navigation stack. */
-    data object Up : AppDestination()
+    /** Home screen */
+    object Home : AppDestination("home")
 
-    /** Splash screen — default startDestination. */
-    data object Splash : AppDestination("splash")
+    /** Budget screen */
+    object Budget : AppDestination("budget")
 
-    /** Home screen. */
-    data object Home : AppDestination("home")
+    /** Category screen */
+    object Category : AppDestination("category")
+
+    /** Report screen */
+    object Report : AppDestination("report")
+
+    /** Setting screen */
+    object Setting : AppDestination("setting")
 }
