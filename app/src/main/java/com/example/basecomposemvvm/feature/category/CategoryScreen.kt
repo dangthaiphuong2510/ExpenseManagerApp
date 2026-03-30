@@ -43,6 +43,7 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun CategoryScreen(
+    isOnline : Boolean = true,
     viewModel: CategoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -199,11 +200,11 @@ fun CategoryScreen(
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    text = { Text("Expense", fontWeight = FontWeight.Bold) })
+                    text = { Text(stringResource(R.string.expense), fontWeight = FontWeight.Bold) })
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    text = { Text("Income", fontWeight = FontWeight.Bold) })
+                    text = { Text(stringResource(R.string.income), fontWeight = FontWeight.Bold) })
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -328,9 +329,15 @@ fun CategoryScreen(
                 TextButton(onClick = {
                     viewModel.deleteCategory(name)
                     categoryToDelete = null
-                }) { Text("Delete", color = Color.Red) }
+                }) { Text(stringResource(R.string.delete), color = Color.Red) }
             },
-            dismissButton = { TextButton(onClick = { categoryToDelete = null }) { Text("Cancel") } }
+            dismissButton = {
+                TextButton(onClick = { categoryToDelete = null }) {
+                    Text(
+                        stringResource(R.string.action_cancel)
+                    )
+                }
+            }
         )
     }
 
@@ -351,7 +358,7 @@ fun CategoryScreen(
             containerColor = Color.White,
             title = {
                 Text(
-                    if (selectedTab == 0) "Add Expense" else "Add Income",
+                    if (selectedTab == 0) stringResource(R.string.add_expense) else stringResource(R.string.add_income),
                     fontWeight = FontWeight.Bold
                 )
             },
@@ -362,7 +369,7 @@ fun CategoryScreen(
                     OutlinedTextField(
                         value = amount,
                         onValueChange = { if (it.all { c -> c.isDigit() }) amount = it },
-                        label = { Text("Amount") },
+                        label = { Text(stringResource(R.string.enter_amount)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
@@ -371,7 +378,7 @@ fun CategoryScreen(
                     OutlinedTextField(
                         value = note,
                         onValueChange = { note = it },
-                        label = { Text("Note") },
+                        label = { Text(stringResource(R.string.note)) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -393,12 +400,12 @@ fun CategoryScreen(
                         amount = ""; note = ""
                     },
                     shape = RoundedCornerShape(12.dp)
-                ) { Text("Save") }
+                ) { Text(stringResource(R.string.Save)) }
             },
             dismissButton = {
                 TextButton(onClick = {
                     showTransactionDialog = false
-                }) { Text("Cancel") }
+                }) { Text(stringResource(R.string.action_cancel)) }
             }
         )
     }
@@ -414,9 +421,13 @@ fun CategoryScreen(
                             .atZone(java.time.ZoneId.systemDefault()).toLocalDate()
                         currentMonth = YearMonth.of(selectedDate.year, selectedDate.month)
                     }
-                }) { Text("OK", fontWeight = FontWeight.Bold) }
+                }) { Text(stringResource(R.string.action_ok), fontWeight = FontWeight.Bold) }
             },
-            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancel") } }
+            dismissButton = {
+                TextButton(onClick = {
+                    showDatePicker = false
+                }) { Text(stringResource(R.string.action_cancel)) }
+            }
         ) { DatePicker(state = datePickerState) }
     }
 }
@@ -476,11 +487,11 @@ fun CategoryFormDialog(
                 }
                 Spacer(Modifier.height(24.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
                     Button(
                         onClick = { if (name.isNotBlank()) onConfirm(name, selectedIconName) },
                         shape = RoundedCornerShape(12.dp)
-                    ) { Text("Confirm") }
+                    ) { Text(stringResource(R.string.create)) }
                 }
             }
         }

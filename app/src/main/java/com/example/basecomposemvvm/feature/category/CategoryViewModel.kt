@@ -7,8 +7,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 data class CategoryUiState(
@@ -29,15 +27,13 @@ class CategoryViewModel @Inject constructor(
     init {
         checkAndSeedCategories()
     }
+
     val uiState: StateFlow<CategoryUiState> = combine(
         repository.getAllLocalTransactions(),
         repository.getAllCategories()
     ) { transactions, categories ->
-
         val income = transactions.filter { it.type == "INCOME" }.sumOf { it.amount }
-
         val expense = transactions.filter { it.type == "EXPENSE" }.sumOf { it.amount }
-
         val totals = transactions.groupBy { it.category }
             .mapValues { entry -> entry.value.sumOf { it.amount } }
 
@@ -76,6 +72,26 @@ class CategoryViewModel @Inject constructor(
                 category = category,
                 type = if (isExpense) "EXPENSE" else "INCOME"
             ).first()
+        }
+    }
+
+    fun overwriteTransaction(amount: Double, category: String, note: String, isExpense: Boolean) {
+        viewModelScope.launch {
+            repository.deleteTransactionsByCategory(category)
+
+            repository.addTransaction(
+                description = note.ifEmpty { "Enter amount description" },
+                amount = amount,
+                date = LocalDate.now().toString(),
+                category = category,
+                type = if (isExpense) "EXPENSE" else "INCOME"
+            ).first()
+        }
+    }
+
+    fun deleteTransaction(id: Int) {
+        viewModelScope.launch {
+            repository.deleteTransactionById(id)
         }
     }
 

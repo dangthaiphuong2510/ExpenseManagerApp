@@ -35,10 +35,11 @@ import com.example.basecomposemvvm.utils.formatCurrency
 
 @Composable
 fun HomeScreen(
-    onNavigateToHistory: () -> Unit, // Đổi tên từ onNavigateToCategory thành onNavigateToHistory
+    onNavigateToHistory: () -> Unit,
     onNavigateToBudget: () -> Unit,
     onNavigateToReport: () -> Unit,
     onNavigateToSetting: () -> Unit,
+    isOnline: Boolean = true,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -106,7 +107,7 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(22.dp))
 
-        // Total Balance Card
+        // Total Balance Card - Lấy từ uiState
         TotalBalanceCard(
             balance = uiState.totalBalance,
             income = uiState.totalIncome,
@@ -128,7 +129,8 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-            TextButton(onClick = { onNavigateToCategory() }) {
+            // ĐÃ SỬA: Gọi đúng hàm onNavigateToHistory
+            TextButton(onClick = onNavigateToHistory) {
                 Text(
                     stringResource(R.string.see_all),
                     style = MaterialTheme.typography.labelLarge,
@@ -163,24 +165,6 @@ fun HomeScreen(
                             date = item.date,
                             type = item.type
                         )
-<<<<<<< HEAD
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                            contentPadding = PaddingValues(bottom = 20.dp)
-                        ) {
-                            items(transactions) { item ->
-                                TransactionItem(
-                                    title = item.description,
-                                    amount = item.amount,
-                                    date = item.date,
-                                    type = item.type
-                                )
-                            }
-                        }
-=======
->>>>>>> 5f9ee58 (update roomdb + viewmodel)
                     }
                 }
             }
@@ -193,20 +177,8 @@ fun HomeScreen(
 }
 
 @Composable
-<<<<<<< HEAD
-fun TransactionItem(
-    title: String,
-    amount: Double,
-    date: String,
-    type: String
-) {
-    // Xác định loại giao dịch từ chuỗi "INCOME" hoặc "EXPENSE" trong DB
-    val isIncome = type.equals("INCOME", ignoreCase = true)
-
-=======
 fun TransactionItem(title: String, amount: Double, date: String, type: String) {
     val isIncome = type.equals("INCOME", ignoreCase = true)
->>>>>>> 5f9ee58 (update roomdb + viewmodel)
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -361,7 +333,7 @@ fun AboutAppDialog(onDismiss: () -> Unit) {
 fun HomeScreenPreview() {
     AppTheme {
         HomeScreen(
-            onNavigateToCategory = {},
+            onNavigateToHistory = {},
             onNavigateToBudget = {},
             onNavigateToReport = {},
             onNavigateToSetting = {}

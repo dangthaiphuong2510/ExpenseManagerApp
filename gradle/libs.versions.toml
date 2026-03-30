@@ -3,6 +3,8 @@
 agp = "8.7.3"
 kotlin = "2.0.21"
 ksp = "2.0.21-1.0.27"
+googleServices = "4.4.2"
+google-auth = "21.3.0"
 
 # AndroidX
 composeBom = "2024.12.01"
@@ -20,6 +22,7 @@ hiltExt = "1.2.0"
 
 # Data
 room = "2.6.1"
+firebaseBom = "32.8.1"
 
 # Network
 retrofit = "2.11.0"
@@ -89,6 +92,12 @@ androidx-room-runtime = { group = "androidx.room", name = "room-runtime", versio
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 
+# Firebase
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-auth = { module = "com.google.firebase:firebase-auth-ktx" }
+kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines" }
+google-play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "google-auth" }
+
 # JSON - Moshi
 moshi-kotlin = { group = "com.squareup.moshi", name = "moshi-kotlin", version.ref = "moshi" }
 moshi-kotlin-codegen = { group = "com.squareup.moshi", name = "moshi-kotlin-codegen", version.ref = "moshi" }
@@ -125,3 +134,4 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }

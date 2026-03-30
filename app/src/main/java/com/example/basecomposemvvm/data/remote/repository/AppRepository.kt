@@ -28,8 +28,14 @@ interface AppRepository {
         type: String
     ): Flow<Result<TransactionResponse>>
 
+    // Local DB Transactions
     fun getAllLocalTransactions(): Flow<List<TransactionEntity>>
 
+    suspend fun deleteTransactionById(id: Int)
+    suspend fun deleteAllTransactions()
+    suspend fun deleteTransactionsByCategory(categoryName: String)
+
+    // Categories
     fun getAllCategories(): Flow<List<CategoryEntity>>
 
     suspend fun addCategory(name: String, iconName: String, isExpense: Boolean)
@@ -55,6 +61,18 @@ class AppRepositoryImpl @Inject constructor(
 
     override fun getAllLocalTransactions(): Flow<List<TransactionEntity>> {
         return transactionDao.getAllTransactions()
+    }
+
+    override suspend fun deleteTransactionById(id: Int) {
+        transactionDao.deleteTransactionById(id.toString())
+    }
+
+    override suspend fun deleteAllTransactions() {
+        transactionDao.deleteAllTransactions()
+    }
+
+    override suspend fun deleteTransactionsByCategory(categoryName: String) {
+        transactionDao.deleteTransactionByCategory(categoryName)
     }
 
     override fun getAllCategories(): Flow<List<CategoryEntity>> {
@@ -106,7 +124,6 @@ class AppRepositoryImpl @Inject constructor(
         type: String
     ): Flow<Result<TransactionResponse>> = flow {
 
-        //INSERT LOCAL
         val local = TransactionEntity(
             id = 0, // autoGenerate
             amount = amount,
@@ -119,7 +136,6 @@ class AppRepositoryImpl @Inject constructor(
         transactionDao.insertTransaction(local)
 
         try {
-            //GỌI API
             val response = apiService.addTransaction(
                 TransactionRequest(
                     description = description,
@@ -129,11 +145,9 @@ class AppRepositoryImpl @Inject constructor(
                     type = type
                 )
             )
-
             emit(Result.success(response))
 
         } catch (e: Exception) {
-            //API fail vẫn OK
             emit(
                 Result.success(
                     TransactionResponse(

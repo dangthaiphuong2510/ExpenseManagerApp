@@ -4,14 +4,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import com.example.basecomposemvvm.R
 
 /**
  * Splash screen composable — the app's launch screen.
@@ -36,13 +38,10 @@ fun SplashScreen(
             .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = "BaseComposeMVVM",
-            style = MaterialTheme.typography.headlineMedium.copy(
-                fontWeight = FontWeight.Bold,
-                fontSize = 28.sp,
-            ),
-            color = MaterialTheme.colorScheme.primary,
+        Image(
+            painter = painterResource(id = R.drawable.logoexpense),
+            contentDescription = "App Logo",
+            modifier = Modifier.size(150.dp)
         )
     }
 }

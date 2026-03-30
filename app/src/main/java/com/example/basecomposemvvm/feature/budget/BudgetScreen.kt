@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.basecomposemvvm.R
 import java.text.DecimalFormat
 import java.time.YearMonth
@@ -33,7 +34,9 @@ import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BudgetScreen() {
+fun BudgetScreen(
+    isOnline: Boolean = true,
+) {
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
     val formatter = DateTimeFormatter.ofPattern("MM/yyyy")
 
