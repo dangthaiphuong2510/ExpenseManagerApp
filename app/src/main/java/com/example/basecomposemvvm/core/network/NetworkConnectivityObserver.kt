@@ -10,7 +10,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import javax.inject.Inject
+import javax.inject.Singleton // Thêm import này
 
+@Singleton
 class NetworkConnectivityObserver @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ConnectivityObserver {
@@ -19,7 +21,6 @@ class NetworkConnectivityObserver @Inject constructor(
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
     override fun observe(): Flow<ConnectivityObserver.Status> = callbackFlow {
-        // Emit initial status
         trySend(getCurrentStatus())
 
         val callback = object : ConnectivityManager.NetworkCallback() {
@@ -51,10 +52,10 @@ class NetworkConnectivityObserver @Inject constructor(
         val network = connectivityManager.activeNetwork ?: return ConnectivityObserver.Status.Unavailable
         val capabilities = connectivityManager.getNetworkCapabilities(network)
             ?: return ConnectivityObserver.Status.Unavailable
-        return if (capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) {
-            ConnectivityObserver.Status.Available
-        } else {
-            ConnectivityObserver.Status.Unavailable
-        }
+        
+        val hasInternet = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+
+        return if (hasInternet) ConnectivityObserver.Status.Available
+        else ConnectivityObserver.Status.Unavailable
     }
 }

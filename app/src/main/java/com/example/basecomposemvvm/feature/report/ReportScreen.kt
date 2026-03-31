@@ -211,7 +211,7 @@ fun CategoryListCard(
             Spacer(modifier = Modifier.width(12.dp))
             Text(text = name, modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)
             Column(horizontalAlignment = Alignment.End) {
-                Text(text = formatCurrency(amount.toLong()), fontWeight = FontWeight.Bold)
+                Text(text = formatCurrency(amount), fontWeight = FontWeight.Bold)
                 Text(text = "$percentage%", fontSize = 12.sp, color = colorScheme.primary)
             }
             Spacer(modifier = Modifier.width(8.dp))
@@ -258,7 +258,7 @@ fun SimplePieChart(data: List<Pair<String, Double>>, chartColors: List<Color>) {
                     color = Color.Gray
                 )
                 Text(
-                    text = formatCurrency(total.toLong()),
+                    text = formatCurrency(total),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = colorScheme.onSurface

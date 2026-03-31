@@ -6,6 +6,9 @@
     <string name="action_ok">OK</string>
     <string name="action_cancel">Cancel</string>
     <string name="Save">Save</string>
+    <string name="create">Create</string>
+    <string name="close">Close</string>
+    <string name="delete">Delete</string>
 
     //home
     <string name="home_welcome_back">Welcome back</string>
@@ -20,6 +23,7 @@
     <string name="income">Income</string>
     <string name="expense">Expense</string>
     <string name="notifications">Notifications</string>
+    <string name="no_transactions_found">No transactions found</string>
     <string name="a_simple_and_powerful_app_to_manage_your_daily_expenses_and_income_efficiently">
         A simple and powerful app to manage your daily expenses and income efficiently.</string>
 
@@ -55,9 +59,37 @@
     <string name="note">Note</string>
     <string name="date">Date</string>
     <string name="expense_manager">Expense Manager</string>
-    <string name="close">Close</string>
     <string name="about_app">About App</string>
     <string name="see_all">See All</string>
     <string name="version_1_0_0">Version 1.0.0</string>
+    <string name="category_name">Category Name</string>
+    <string name="e_g_food_transport">e.g., Food, Transport...</string>
+    <string name="category_name_cannot_be_empty">Category name cannot be empty</string>
+    <string name="select_icon">Select Icon</string>
+    <string name="add_new_category">Add New Category</string>
+
+    //history
+    <string name="history_title">Transaction History</string>
+    <string name="delete_all">Delete All</string>
+    <string name="confirm_delete_all_title">Confirm Delete All</string>
+    <string name="confirm_delete_all_msg">Are you sure you want to delete all transactions?</string>
+    <string name="no_internet_connection">No internet connection</string>
+    <string name="password">Password</string>
+
+    //Auth
+    <string name="login_to_your_account">SignIn to your account</string>
+    <string name="email">Email</string>
+    <string name="login">LOGIN</string>
+    <string name="don_t_have_an_account">"Don't have an account? "</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="please_check_your_internet_connection">Please check your internet connection</string>
+    <string name="create_account">Create Account</string>
+    <string name="start_managing_your_finances_today">Start managing your finances today</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="already_have_an_account">"Already have an account? "</string>
+    <string name="register_successful">Register successful</string>
+    <string name="default_web_client_id">946070829662-h144ugcgbgkbo008n0lj958m7hb0kubt.apps.googleusercontent.com</string>
+    <string name="continue_with_google">Continue with Google</string>
+
 
 </resources>

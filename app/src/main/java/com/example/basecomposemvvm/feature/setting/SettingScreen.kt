@@ -1,6 +1,5 @@
 package com.example.basecomposemvvm.feature.setting
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,15 +16,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.basecomposemvvm.R
-import com.example.basecomposemvvm.designsystem.theme.AppTheme
+import com.example.basecomposemvvm.feature.authentication.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingScreen() {
+fun SettingScreen(
+    isOnline: Boolean = true,
+    onLogout: () -> Unit,
+    viewModel: AuthViewModel = hiltViewModel()
+) {
     val colorScheme = MaterialTheme.colorScheme
 
     var isDarkMode by remember { mutableStateOf(false) }
@@ -54,14 +57,41 @@ fun SettingScreen() {
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            //setting
+            item {
+                Text(
+                    "Account",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = colorScheme.primary,
+                    modifier = Modifier.padding(top = 16.dp, start = 8.dp)
+                )
+            }
+
+            item {
+                Card(
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(1.dp)
+                ) {
+                    SettingItem(
+                        icon = Icons.Rounded.Logout,
+                        title = "Logout",
+                        titleColor = if (isOnline) Color.Red else Color.Gray,
+                        onClick = { if (isOnline) onLogout() },
+                        trailing = {
+                            if (!isOnline) Text("Offline", color = Color.Gray, fontSize = 12.sp)
+                        }
+                    )
+                }
+            }
+
             item {
                 Text(
                     stringResource(R.string.general),
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
                     color = colorScheme.primary,
-                    modifier = Modifier.padding(top = 16.dp, start = 8.dp)
+                    modifier = Modifier.padding(top = 8.dp, start = 8.dp)
                 )
             }
 
@@ -91,7 +121,6 @@ fun SettingScreen() {
                 }
             }
 
-            //qly dữ liệu
             item {
                 Text(
                     stringResource(R.string.data_management),
@@ -112,14 +141,14 @@ fun SettingScreen() {
                         SettingItem(
                             icon = Icons.Rounded.FileDownload,
                             title = "Export Data (CSV/PDF)",
-                            onClick = { }
+                            onClick = { if (isOnline) {} }
                         )
                         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp)
                         SettingItem(
                             icon = Icons.Rounded.DeleteForever,
                             title = stringResource(R.string.clear_all_data),
-                            titleColor = Color.Red,
-                            onClick = { showDeleteDialog = true }
+                            titleColor = if (isOnline) Color.Red else Color.Gray,
+                            onClick = { if (isOnline) showDeleteDialog = true }
                         )
                     }
                 }
@@ -152,7 +181,7 @@ fun SettingScreen() {
                         SettingItem(
                             icon = Icons.Rounded.Star,
                             title = stringResource(R.string.rate_app),
-                            onClick = { }
+                            onClick = {  }
                         )
                     }
                 }
@@ -161,7 +190,8 @@ fun SettingScreen() {
             item { Spacer(modifier = Modifier.height(32.dp)) }
         }
     }
-    if (showDeleteDialog) {
+
+    if (showDeleteDialog && isOnline) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text(stringResource(R.string.confirm_delete_title)) },
@@ -169,6 +199,7 @@ fun SettingScreen() {
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteDialog = false
+                    // viewModel.clearAllData()
                 }) {
                     Text(stringResource(R.string.action_ok), color = Color.Red)
                 }
@@ -181,8 +212,6 @@ fun SettingScreen() {
         )
     }
 }
-
-
 @Composable
 fun SettingItem(
     icon: ImageVector,
@@ -217,12 +246,5 @@ fun SettingItem(
             contentDescription = null,
             tint = Color.Gray
         )
-    }
-}
-@Preview(showBackground = true)
-@Composable
-fun SettingScreenPreview() {
-    AppTheme {
-        SettingScreen()
     }
 }
