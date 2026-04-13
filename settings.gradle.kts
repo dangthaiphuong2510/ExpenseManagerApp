@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "BaseComposeMVVM"
+rootProject.name = "ExpenseManager"
 include(":app")

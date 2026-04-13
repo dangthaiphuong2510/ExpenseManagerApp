@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.basecomposemvvm"
+    namespace = "com.example.expensemanager"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.basecomposemvvm"
+        applicationId = "com.example.expensemanager"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
