@@ -22,7 +22,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.expensemanager.R
 import com.example.expensemanager.designsystem.theme.AppIcons
-import com.example.expensemanager.utils.formatCurrency
+import com.example.expensemanager.utils.format.formatCurrency
 
 @Composable
 fun ReportScreen(viewModel: ReportViewModel = hiltViewModel()) {

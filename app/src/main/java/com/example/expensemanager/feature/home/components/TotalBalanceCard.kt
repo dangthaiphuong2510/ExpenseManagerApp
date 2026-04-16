@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.sp
 import com.example.expensemanager.R
 import com.example.expensemanager.designsystem.theme.ExpenseRed
 import com.example.expensemanager.designsystem.theme.IncomeGreen
-import com.example.expensemanager.utils.formatCurrency
+import com.example.expensemanager.utils.format.formatCurrency
 
 @Composable
 fun TotalBalanceCard(balance: Double, income: Double, expense: Double, isLoading: Boolean) {

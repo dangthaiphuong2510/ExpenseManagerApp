@@ -79,7 +79,7 @@ fun RegisterScreen(
         try {
             val account = task.getResult(ApiException::class.java)
             account?.idToken?.let { viewModel.signInWithGoogle(it) }
-        } catch (e: Exception) { /* Handle error */ }
+        } catch (e: Exception) { }
     }
 
     LaunchedEffect(state) {
@@ -133,7 +133,7 @@ fun RegisterScreen(
                 singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             // Email Field
             OutlinedTextField(
@@ -153,7 +153,7 @@ fun RegisterScreen(
                 singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             // Password Field
             OutlinedTextField(
@@ -185,7 +185,7 @@ fun RegisterScreen(
                 singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             // Confirm Password Field
             OutlinedTextField(
@@ -220,9 +220,9 @@ fun RegisterScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            // Register Button
+            // SignUp Button
             Button(
                 onClick = {
                     val isEmailValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()

@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.expensemanager.R
 import com.example.expensemanager.designsystem.theme.AppIcons
-import com.example.expensemanager.utils.formatCurrency
+import com.example.expensemanager.utils.format.formatCurrency
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale

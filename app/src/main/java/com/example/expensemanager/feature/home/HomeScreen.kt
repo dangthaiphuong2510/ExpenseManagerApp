@@ -31,8 +31,11 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.homeState.collectAsStateWithLifecycle()
+
+    // Sử dụng lại showNotificationSheet và sheetState
     var showNotificationSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
+
     val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
 
     Column(
@@ -46,15 +49,13 @@ fun HomeScreen(
 
         HomeHeader(
             notificationCount = uiState.notificationCount,
-            onNotificationClick = { showNotificationSheet = true }
+            onNotificationClick = {
+                showNotificationSheet = true
+                viewModel.markNotificationsAsRead()
+            }
         )
 
         Spacer(modifier = Modifier.height(20.dp))
-
-        uiState.budgetWarning?.let {
-            BudgetWarningBanner(message = it)
-            Spacer(modifier = Modifier.height(16.dp))
-        }
 
         TotalBalanceCard(
             balance = uiState.totalBalance ?: 0.0,
@@ -92,11 +93,11 @@ fun HomeScreen(
         }
     }
 
-    //Bottom Sheet
+    // Quay lại sử dụng NotificationBottomSheet
     if (showNotificationSheet) {
         NotificationBottomSheet(
             sheetState = sheetState,
-            uiState = uiState,
+            uiState = uiState, // Lưu ý: File này cần được cập nhật List budgetWarnings
             onDismiss = { showNotificationSheet = false }
         )
     }

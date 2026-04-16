@@ -1,4 +1,4 @@
-package com.example.expensemanager.utils
+package com.example.expensemanager.utils.format
 
 import java.text.NumberFormat
 import java.util.Locale

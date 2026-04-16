@@ -26,7 +26,7 @@ import androidx.compose.ui.window.Dialog
 import com.example.expensemanager.R
 import com.example.expensemanager.designsystem.theme.AppIcons
 import com.example.expensemanager.designsystem.theme.ExpenseRed
-import com.example.expensemanager.utils.formatCurrency
+import com.example.expensemanager.utils.format.formatCurrency
 import java.text.SimpleDateFormat
 import java.util.*
 

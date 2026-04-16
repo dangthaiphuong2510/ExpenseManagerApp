@@ -28,11 +28,11 @@ import com.example.expensemanager.feature.authentication.LoginScreen
 import com.example.expensemanager.feature.authentication.RegisterScreen
 import com.example.expensemanager.feature.budget.BudgetScreen
 import com.example.expensemanager.feature.category.CategoryScreen
+import com.example.expensemanager.feature.currency.CurrencySelectionScreen
 import com.example.expensemanager.feature.history.HistoryScreen
 import com.example.expensemanager.feature.home.HomeScreen
 import com.example.expensemanager.feature.report.ReportScreen
 import com.example.expensemanager.feature.setting.SettingScreen
-
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
@@ -41,7 +41,8 @@ fun AppNavigation(
     connectivityObserver: NetworkConnectivityObserver,
     auth: FirebaseAuth,
     currentTheme: String,
-    onThemeChange: (String) -> Unit
+    onThemeChange: (String) -> Unit,
+    isCurrencySet: Boolean
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -52,7 +53,11 @@ fun AppNavigation(
     val isOnline = networkStatus == ConnectivityObserver.Status.Available
 
     val startDestination = remember {
-        if (auth.currentUser != null) AppDestination.Home.route else "login"
+        if (auth.currentUser != null) {
+            if (isCurrencySet) AppDestination.Home.route else "currency_selection"
+        } else {
+            "login"
+        }
     }
 
     val bottomNavItems = listOf(
@@ -123,7 +128,9 @@ fun AppNavigation(
                     LoginScreen(
                         isOnline = isOnline,
                         onLoginSuccess = {
-                            navController.navigate(AppDestination.Home.route) {
+                            val target =
+                                if (isCurrencySet) AppDestination.Home.route else "currency_selection"
+                            navController.navigate(target) {
                                 popUpTo("login") { inclusive = true }
                             }
                         },
@@ -137,10 +144,22 @@ fun AppNavigation(
                     RegisterScreen(
                         isOnline = isOnline,
                         onRegisterSuccess = {
-                            navController.popBackStack()
+                            navController.navigate("currency_selection") {
+                                popUpTo("register") { inclusive = true }
+                            }
                         },
                         onGoToLogin = {
                             navController.popBackStack()
+                        }
+                    )
+                }
+
+                composable("currency_selection") {
+                    CurrencySelectionScreen(
+                        onFinished = {
+                            navController.navigate(AppDestination.Home.route) {
+                                popUpTo("currency_selection") { inclusive = true }
+                            }
                         }
                     )
                 }
