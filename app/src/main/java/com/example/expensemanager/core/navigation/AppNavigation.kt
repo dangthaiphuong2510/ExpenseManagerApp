@@ -24,8 +24,8 @@ import com.example.expensemanager.core.network.ConnectivityObserver
 import com.example.expensemanager.core.network.NetworkConnectivityObserver
 import com.example.expensemanager.designsystem.theme.AppIcons
 import com.example.expensemanager.designsystem.theme.ExpenseRed
-import com.example.expensemanager.feature.authentication.LoginScreen
-import com.example.expensemanager.feature.authentication.RegisterScreen
+import com.example.expensemanager.feature.authentication.login.LoginScreen
+import com.example.expensemanager.feature.authentication.register.RegisterScreen
 import com.example.expensemanager.feature.budget.BudgetScreen
 import com.example.expensemanager.feature.category.CategoryScreen
 import com.example.expensemanager.feature.currency.CurrencySelectionScreen
@@ -42,7 +42,7 @@ fun AppNavigation(
     auth: FirebaseAuth,
     currentTheme: String,
     onThemeChange: (String) -> Unit,
-    isCurrencySet: Boolean
+    isCurrencySet: Boolean // Giá trị từ DataStore truyền từ MainActivity
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -52,7 +52,7 @@ fun AppNavigation(
     )
     val isOnline = networkStatus == ConnectivityObserver.Status.Available
 
-    val startDestination = remember {
+    val startDestination = remember(auth.currentUser, isCurrencySet) {
         if (auth.currentUser != null) {
             if (isCurrencySet) AppDestination.Home.route else "currency_selection"
         } else {
@@ -124,41 +124,49 @@ fun AppNavigation(
                 modifier = Modifier.fillMaxSize()
             ) {
 
-                composable("login") {
-                    LoginScreen(
-                        isOnline = isOnline,
-                        onLoginSuccess = {
-                            val target =
-                                if (isCurrencySet) AppDestination.Home.route else "currency_selection"
-                            navController.navigate(target) {
+            composable("login") {
+                LoginScreen(
+                    isOnline = isOnline,
+                    onLoginSuccess = {
+                        if (isCurrencySet) {
+                            navController.navigate(AppDestination.Home.route) {
                                 popUpTo("login") { inclusive = true }
                             }
-                        },
-                        onGoToRegister = {
-                            navController.navigate("register")
+                        } else {
+                            navController.navigate("currency_selection") {
+                                popUpTo("login") { inclusive = true }
+                            }
                         }
-                    )
-                }
+                    },
+                    onGoToRegister = { navController.navigate("register") }
+                )
+            }
 
                 composable("register") {
                     RegisterScreen(
                         isOnline = isOnline,
                         onRegisterSuccess = {
-                            navController.navigate("currency_selection") {
+                            auth.signOut()
+                            navController.navigate("login") {
                                 popUpTo("register") { inclusive = true }
                             }
                         },
-                        onGoToLogin = {
-                            navController.popBackStack()
-                        }
+                        onGoToLogin = { navController.popBackStack() }
                     )
                 }
 
                 composable("currency_selection") {
                     CurrencySelectionScreen(
                         onFinished = {
-                            navController.navigate(AppDestination.Home.route) {
-                                popUpTo("currency_selection") { inclusive = true }
+                            val hasBackstack = navController.previousBackStackEntry != null
+                            val fromSetting = navController.previousBackStackEntry?.destination?.route == AppDestination.Setting.route
+
+                            if (fromSetting) {
+                                navController.popBackStack()
+                            } else {
+                                navController.navigate(AppDestination.Home.route) {
+                                    popUpTo("currency_selection") { inclusive = true }
+                                }
                             }
                         }
                     )
@@ -170,6 +178,7 @@ fun AppNavigation(
                         onNavigateToBudget = { navController.navigate(AppDestination.Budget.route) },
                         onNavigateToReport = { navController.navigate(AppDestination.Report.route) },
                         onNavigateToSetting = { navController.navigate(AppDestination.Setting.route) },
+                        onNavigateToAddTransaction = { navController.navigate("add_transaction") },
                         isOnline = isOnline
                     )
                 }
@@ -197,6 +206,9 @@ fun AppNavigation(
                         isOnline = isOnline,
                         currentTheme = currentTheme,
                         onThemeChange = onThemeChange,
+                        onNavigateToCurrencySelection = {
+                            navController.navigate("currency_selection")
+                        },
                         onLogout = {
                             auth.signOut()
                             navController.navigate("login") {

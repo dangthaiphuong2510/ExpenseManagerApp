@@ -34,28 +34,20 @@ object AppIcons {
         "ic_others" to R.drawable.ic_others
     )
 
-    /**
-     * Bước 1: Lấy Resource ID từ mã Icon (Ví dụ: "ic_food" -> R.drawable.ic_food)
-     * Nếu không tìm thấy mã, nó sẽ tự động dùng hàm "đoán" theo tên.
-     */
+
     fun getIconIdByName(iconKey: String?): Int {
         if (iconKey.isNullOrBlank()) return R.drawable.ic_others
 
         val key = iconKey.trim().lowercase()
 
-        // 1. Tìm chính xác theo Key (ic_food, ic_makeup...)
         val resId = CategoryIconsList.find { it.first == key }?.second
         if (resId != null) return resId
 
-        // 2. Nếu không tìm thấy (có thể là dữ liệu cũ), dùng logic đoán từ khóa
         val guessedKey = getIconKeyByName(key)
         return CategoryIconsList.find { it.first == guessedKey }?.second ?: R.drawable.ic_others
     }
 
-    /**
-     * Bước 2: Hàm Smart Mapping - Đoán mã icon dựa trên từ khóa.
-     * Hàm này giúp sửa lỗi gạch đỏ trong Repository và xử lý dữ liệu từ API.
-     */
+
     fun getIconKeyByName(name: String?): String {
         if (name.isNullOrBlank()) return "ic_others"
 

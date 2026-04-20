@@ -4,6 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
@@ -27,77 +30,93 @@ fun HomeScreen(
     onNavigateToBudget: () -> Unit,
     onNavigateToReport: () -> Unit,
     onNavigateToSetting: () -> Unit,
+    onNavigateToAddTransaction: () -> Unit,
     isOnline: Boolean,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.homeState.collectAsStateWithLifecycle()
 
-    // Sử dụng lại showNotificationSheet và sheetState
     var showNotificationSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
 
     val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding()
-            .padding(horizontal = 20.dp)
-    ) {
-        Spacer(modifier = Modifier.height(20.dp))
-
-        HomeHeader(
-            notificationCount = uiState.notificationCount,
-            onNotificationClick = {
-                showNotificationSheet = true
-                viewModel.markNotificationsAsRead()
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onNavigateToAddTransaction,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = stringResource(R.string.add_transaction),
+                    modifier = Modifier.size(28.dp)
+                )
             }
-        )
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 20.dp)
+        ) {
+            Spacer(modifier = Modifier.height(20.dp))
 
-        Spacer(modifier = Modifier.height(20.dp))
+            HomeHeader(
+                notificationCount = uiState.notificationCount,
+                onNotificationClick = {
+                    showNotificationSheet = true
+                    viewModel.markNotificationsAsRead()
+                }
+            )
 
-        TotalBalanceCard(
-            balance = uiState.totalBalance ?: 0.0,
-            income = uiState.totalIncome ?: 0.0,
-            expense = uiState.totalExpense ?: 0.0,
-            isLoading = uiState.isInitialLoad
-        )
+            Spacer(modifier = Modifier.height(20.dp))
 
-        Spacer(modifier = Modifier.height(28.dp))
+            TotalBalanceCard(
+                balance = uiState.totalBalance ?: 0.0,
+                income = uiState.totalIncome ?: 0.0,
+                expense = uiState.totalExpense ?: 0.0,
+                isLoading = uiState.isInitialLoad
+            )
 
-        RecentTransactionsHeader(onSeeAllClick = onNavigateToHistory)
+            Spacer(modifier = Modifier.height(28.dp))
 
-        Spacer(modifier = Modifier.height(10.dp))
+            RecentTransactionsHeader(onSeeAllClick = onNavigateToHistory)
 
-        //Transactions List
-        Box(modifier = Modifier.weight(1f)) {
-            if (uiState.isLoading && uiState.isInitialLoad) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else if (uiState.recentTransactions.isEmpty()) {
-                EmptyTransactionsPlaceholder()
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                    contentPadding = PaddingValues(bottom = 24.dp)
-                ) {
-                    items(items = uiState.recentTransactions, key = { it.id }) { item ->
-                        TransactionItem(
-                            item = item,
-                            formattedDate = dateFormatter.format(Date(item.date))
-                        )
+            Spacer(modifier = Modifier.height(10.dp))
+
+            //Transactions List
+            Box(modifier = Modifier.weight(1f)) {
+                if (uiState.isLoading && uiState.isInitialLoad) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                } else if (uiState.recentTransactions.isEmpty()) {
+                    EmptyTransactionsPlaceholder()
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                        contentPadding = PaddingValues(bottom = 80.dp)
+                    ) {
+                        items(items = uiState.recentTransactions, key = { it.id }) { item ->
+                            TransactionItem(
+                                item = item,
+                                formattedDate = dateFormatter.format(Date(item.date))
+                            )
+                        }
                     }
                 }
             }
         }
     }
 
-    // Quay lại sử dụng NotificationBottomSheet
     if (showNotificationSheet) {
         NotificationBottomSheet(
             sheetState = sheetState,
-            uiState = uiState, // Lưu ý: File này cần được cập nhật List budgetWarnings
+            uiState = uiState,
             onDismiss = { showNotificationSheet = false }
         )
     }

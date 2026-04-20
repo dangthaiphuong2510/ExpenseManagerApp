@@ -17,7 +17,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.expensemanager.R
+import com.example.expensemanager.utils.format.formatWithLocalCurrency // Tích hợp hàm format mới
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BudgetScreen(
     viewModel: BudgetViewModel = hiltViewModel()
@@ -87,7 +89,6 @@ fun BudgetScreen(
                     onItemClick = { selectedCategoryToEdit = it }
                 )
             }
-
         }
     }
 
@@ -96,7 +97,7 @@ fun BudgetScreen(
             title = if (selectedCategoryToEdit != null) "Edit Budget" else "Set Budget",
             categories = uiState.budgetList.map { it.category },
             initialCategory = selectedCategoryToEdit?.category ?: "",
-            initialAmount = selectedCategoryToEdit?.limit?.toInt()?.toString() ?: "",
+            initialAmount = selectedCategoryToEdit?.limit?.toLong()?.toString() ?: "",
             isCategoryFixed = selectedCategoryToEdit != null,
             onDismiss = { showDialog = false; selectedCategoryToEdit = null },
             onConfirm = { cat, amt ->

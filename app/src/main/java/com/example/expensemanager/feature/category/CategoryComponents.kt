@@ -19,7 +19,7 @@ import com.example.expensemanager.R
 import com.example.expensemanager.designsystem.theme.AppIcons
 import com.example.expensemanager.designsystem.theme.ExpenseRed
 import com.example.expensemanager.designsystem.theme.IncomeGreen
-import com.example.expensemanager.utils.format.formatCurrency
+import com.example.expensemanager.utils.format.formatWithLocalCurrency
 
 @Composable
 fun CategoryBalanceCard(
@@ -30,7 +30,6 @@ fun CategoryBalanceCard(
 ) {
     Card(
         shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -54,7 +53,7 @@ fun CategoryBalanceCard(
                     color = Color.Gray
                 )
                 Text(
-                    formatCurrency(totalBalance),
+                    text = totalBalance.formatWithLocalCurrency(),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Black
                 )
@@ -82,7 +81,11 @@ private fun CategoryMiniStat(
 ) {
     Column(horizontalAlignment = alignment) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-        Text(formatCurrency(amount), color = color, fontWeight = FontWeight.Bold)
+        Text(
+            text = amount.formatWithLocalCurrency(),
+            color = color,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -160,7 +163,6 @@ fun CategoryGrid(
 
             Card(
                 shape = RoundedCornerShape(20.dp),
-                elevation = CardDefaults.cardElevation(1.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 modifier = Modifier
                     .aspectRatio(1f)
@@ -187,7 +189,7 @@ fun CategoryGrid(
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = formatCurrency(amount),
+                        text = amount.formatWithLocalCurrency(),
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.labelSmall,
                         color = if (amount > 0) MaterialTheme.colorScheme.primary

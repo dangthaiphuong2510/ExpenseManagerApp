@@ -17,6 +17,7 @@ import com.example.expensemanager.core.navigation.AppNavigation
 import com.example.expensemanager.core.network.NetworkConnectivityObserver
 import com.example.expensemanager.data.local.datastore.CurrencyManager
 import com.example.expensemanager.designsystem.theme.AppTheme
+import com.example.expensemanager.utils.format.LocalCurrencySymbol // Đảm bảo import đúng path này
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -44,6 +45,10 @@ class MainActivity : ComponentActivity() {
                 initialValue = false
             )
 
+            val currencySymbol by currencyManager.currencySymbol.collectAsStateWithLifecycle(
+                initialValue = "₫"
+            )
+
             var themeState by rememberSaveable { mutableStateOf("System") }
             val isDarkTheme = when (themeState) {
                 "Dark" -> true
@@ -53,32 +58,33 @@ class MainActivity : ComponentActivity() {
 
             val navController = rememberNavController()
 
-            AppTheme(darkTheme = isDarkTheme) {
+            CompositionLocalProvider(LocalCurrencySymbol provides currencySymbol) {
+                AppTheme(darkTheme = isDarkTheme) {
+                    val backgroundColor = MaterialTheme.colorScheme.background.toArgb()
 
-                val backgroundColor = MaterialTheme.colorScheme.background.toArgb()
+                    LaunchedEffect(isDarkTheme, backgroundColor) {
+                        enableEdgeToEdge(
+                            statusBarStyle = if (!isDarkTheme) {
+                                SystemBarStyle.light(backgroundColor, backgroundColor)
+                            } else {
+                                SystemBarStyle.dark(backgroundColor)
+                            },
+                            navigationBarStyle = SystemBarStyle.auto(
+                                backgroundColor,
+                                backgroundColor
+                            ) { isDarkTheme }
+                        )
+                    }
 
-                LaunchedEffect(isDarkTheme, backgroundColor) {
-                    enableEdgeToEdge(
-                        statusBarStyle = if (!isDarkTheme) {
-                            SystemBarStyle.light(backgroundColor, backgroundColor)
-                        } else {
-                            SystemBarStyle.dark(backgroundColor)
-                        },
-                        navigationBarStyle = SystemBarStyle.auto(
-                            backgroundColor,
-                            backgroundColor
-                        ) { isDarkTheme }
+                    AppNavigation(
+                        navController = navController,
+                        connectivityObserver = networkConnectivityObserver,
+                        auth = auth,
+                        currentTheme = themeState,
+                        onThemeChange = { themeState = it },
+                        isCurrencySet = isCurrencySet
                     )
                 }
-
-                AppNavigation(
-                    navController = navController,
-                    connectivityObserver = networkConnectivityObserver,
-                    auth = auth,
-                    currentTheme = themeState,
-                    onThemeChange = { themeState = it },
-                    isCurrencySet = isCurrencySet
-                )
             }
         }
     }

@@ -34,4 +34,8 @@ interface AppRepository {
     suspend fun upsertBudget(category: String, amount: Double, month: Int, year: Int)
     suspend fun deleteBudget(category: String, month: Int, year: Int)
     suspend fun deleteOnlyBudget(category: String, month: Int, year: Int)
+    suspend fun deleteAllBudgets()
+
+    // Global Management
+    suspend fun clearAllLocalData()
 }

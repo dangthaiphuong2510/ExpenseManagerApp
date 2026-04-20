@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.expensemanager.R
 import com.example.expensemanager.designsystem.theme.AppIcons
-import com.example.expensemanager.utils.format.formatCurrency
+import com.example.expensemanager.utils.format.formatWithLocalCurrency
 
 @Composable
 fun SimplePieChart(
@@ -57,7 +57,7 @@ fun SimplePieChart(
                     color = Color.Gray
                 )
                 Text(
-                    text = formatCurrency(totalAmount),
+                    text = totalAmount.formatWithLocalCurrency(),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -104,7 +104,7 @@ fun CategoryListCard(
                 Text(text = "$percentage%", fontSize = 12.sp, color = Color.Gray)
             }
             Text(
-                text = formatCurrency(amount),
+                text = amount.formatWithLocalCurrency(),
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onSurface
             )

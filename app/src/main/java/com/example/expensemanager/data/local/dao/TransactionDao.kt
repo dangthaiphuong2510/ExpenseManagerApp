@@ -13,7 +13,6 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE id = :id")
     fun getTransactionById(id: Int): Flow<TransactionEntity?>
 
-
     @Query("""
         SELECT * FROM transactions
         WHERE strftime('%m', date / 1000, 'unixepoch', 'localtime') = :month

@@ -17,14 +17,13 @@ import androidx.compose.ui.unit.sp
 import com.example.expensemanager.R
 import com.example.expensemanager.designsystem.theme.ExpenseRed
 import com.example.expensemanager.designsystem.theme.IncomeGreen
-import com.example.expensemanager.utils.format.formatCurrency
+import com.example.expensemanager.utils.format.formatWithLocalCurrency
 
 @Composable
 fun TotalBalanceCard(balance: Double, income: Double, expense: Double, isLoading: Boolean) {
     Card(
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
@@ -34,22 +33,25 @@ fun TotalBalanceCard(balance: Double, income: Double, expense: Double, isLoading
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = if (isLoading) "---" else formatCurrency(balance),
+                text = if (isLoading) "---" else balance.formatWithLocalCurrency(),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Black
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 BalanceInfo(
                     label = stringResource(R.string.income),
-                    amount = if (isLoading) "---" else formatCurrency(income),
+                    amount = if (isLoading) "---" else income.formatWithLocalCurrency(),
                     color = IncomeGreen
                 )
                 BalanceInfo(
                     label = stringResource(R.string.expense),
-                    amount = if (isLoading) "---" else formatCurrency(expense),
+                    amount = if (isLoading) "---" else expense.formatWithLocalCurrency(),
                     color = ExpenseRed,
                     isEnd = true
                 )
@@ -62,9 +64,16 @@ fun TotalBalanceCard(balance: Double, income: Double, expense: Double, isLoading
 private fun BalanceInfo(label: String, amount: String, color: Color, isEnd: Boolean = false) {
     Column(horizontalAlignment = if (isEnd) Alignment.End else Alignment.Start) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(color))
+            Box(modifier = Modifier
+                .size(10.dp)
+                .clip(CircleShape)
+                .background(color))
             Spacer(Modifier.width(6.dp))
-            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
         Text(amount, fontWeight = FontWeight.Bold, color = color, fontSize = 16.sp)
     }

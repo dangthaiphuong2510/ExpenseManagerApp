@@ -16,11 +16,9 @@ interface BudgetDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBudget(budget: BudgetEntity)
 
-    @Query(
-        """
-    DELETE FROM budgets 
-    WHERE category = :category AND month = :month AND year = :year
-"""
-    )
+    @Query("DELETE FROM budgets WHERE category = :category AND month = :month AND year = :year")
     suspend fun deleteBudget(category: String, month: Int, year: Int)
+
+    @Query("DELETE FROM budgets")
+    suspend fun deleteAllBudgets()
 }

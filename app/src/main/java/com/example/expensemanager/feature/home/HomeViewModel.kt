@@ -28,7 +28,7 @@ data class HomeUiState(
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val repository: AppRepository,
-    private val currencyManager: CurrencyManager // Inject CurrencyManager
+    private val currencyManager: CurrencyManager
 ) : ViewModel() {
 
     private val _homeState = MutableStateFlow(HomeUiState(isLoading = true))
@@ -92,17 +92,17 @@ class HomeViewModel @Inject constructor(
                     if (budget.amount > 0 && totalSpent > (budget.amount * 0.8)) {
                         val spentStr = totalSpent.formatAmount(symbol)
                         val budgetStr = budget.amount.formatAmount(symbol)
-                        warningMessages.add("Bạn đã tiêu $spentStr trên hạn mức $budgetStr cho ${budget.category}!")
+                        warningMessages.add("You have spent $spentStr exceeding your $budgetStr limit for ${budget.category}!")
                     }
                 }
 
                 if (result.income == 0.0 && result.expense > 0) {
-                    warningMessages.add("Cảnh báo: Bạn đang chi tiêu mà chưa có nguồn thu nào!")
+                    warningMessages.add("Warning: You are spending money without any income!")
                 }
 
                 val hasTransactionToday = result.rawTransactions.any { it.date >= todayStart }
                 if (!hasTransactionToday) {
-                    warningMessages.add("Hôm nay bạn chưa nhập chi tiêu nào, đừng quên nhé!")
+                    warningMessages.add("Warning: No transactions have been made today.")
                 }
 
                 _homeState.update { currentState ->
@@ -122,6 +122,34 @@ class HomeViewModel @Inject constructor(
                 .onStart { _homeState.update { it.copy(isLoading = true) } }
                 .distinctUntilChanged()
                 .collect()
+        }
+    }
+
+    // --- LOGIC CLEAR ALL DATA ---
+    fun clearAllData(onComplete: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                // 1. Xóa sạch trong Database (Transactions & Budgets)
+                repository.clearAllLocalData()
+
+                // 2. Reset trạng thái UI về mặc định ngay lập tức
+                _homeState.update { currentState ->
+                    currentState.copy(
+                        totalBalance = 0.0,
+                        totalIncome = 0.0,
+                        totalExpense = 0.0,
+                        recentTransactions = emptyList(),
+                        budgetWarnings = emptyList(),
+                        notificationCount = 0,
+                        isLoading = false
+                    )
+                }
+
+                // 3. Gọi callback để báo UI hiện Toast hoặc tắt Dialog
+                onComplete()
+            } catch (e: Exception) {
+                _homeState.update { it.copy(isLoading = false) }
+            }
         }
     }
 

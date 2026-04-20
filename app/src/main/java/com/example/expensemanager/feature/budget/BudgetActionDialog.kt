@@ -38,7 +38,11 @@ fun BudgetActionDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(shape = RoundedCornerShape(28.dp), color = Color.White) {
             Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
                 Spacer(Modifier.height(16.dp))
 
                 if (!isCategoryFixed) {
@@ -48,18 +52,31 @@ fun BudgetActionDialog(
                             onValueChange = {},
                             readOnly = true,
                             label = { Text(stringResource(R.string.select_category)) },
-                            trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
-                            modifier = Modifier.fillMaxWidth().clickable { expanded = true },
+                            trailingIcon = {
+                                Icon(
+                                    Icons.Default.ArrowDropDown,
+                                    contentDescription = null
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { expanded = true },
                             shape = RoundedCornerShape(12.dp)
                         )
                         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                             categories.forEach { category ->
-                                DropdownMenuItem(text = { Text(category) }, onClick = { selectedCat = category; expanded = false })
+                                DropdownMenuItem(
+                                    text = { Text(category) },
+                                    onClick = { selectedCat = category; expanded = false })
                             }
                         }
                     }
                 } else {
-                    Text("Category: $selectedCat", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    Text(
+                        "Category: $selectedCat",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
 
                 Spacer(Modifier.height(16.dp))
@@ -75,7 +92,10 @@ fun BudgetActionDialog(
                 Spacer(Modifier.height(24.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
-                    Button(onClick = { onConfirm(selectedCat, amt.toDoubleOrNull() ?: 0.0) }, shape = RoundedCornerShape(12.dp)) {
+                    Button(
+                        onClick = { onConfirm(selectedCat, amt.toDoubleOrNull() ?: 0.0) },
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
                         Text(stringResource(R.string.Save))
                     }
                 }

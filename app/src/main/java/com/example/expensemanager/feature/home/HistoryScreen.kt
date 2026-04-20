@@ -20,7 +20,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.expensemanager.R
 import com.example.expensemanager.designsystem.theme.AppIcons
-// Chú ý: Đảm bảo import đúng đường dẫn component bạn đã tách
 import com.example.expensemanager.feature.home.components.TransactionItem
 import java.text.SimpleDateFormat
 import java.util.*
@@ -70,11 +69,9 @@ fun HistoryScreen(
                 .fillMaxSize()
                 .padding(horizontal = 20.dp)
         ) {
-            // Month Selector Card
             Card(
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(1.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -124,7 +121,6 @@ fun HistoryScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Search TextField
             OutlinedTextField(
                 value = uiState.searchQuery,
                 onValueChange = { viewModel.filterTransactions(it) },
@@ -143,39 +139,36 @@ fun HistoryScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // List History
-            if (uiState.isLoading) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else if (uiState.transactions.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.weight(1f)) {
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                } else if (uiState.transactions.isEmpty()) {
                     Text(
                         stringResource(R.string.no_transactions_found),
+                        modifier = Modifier.align(Alignment.Center),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 24.dp)
-                ) {
-                    items(
-                        items = uiState.transactions,
-                        key = { it.id }
-                    ) { item ->
-                        TransactionItem(
-                            item = item,
-                            formattedDate = dateFormatter.format(Date(item.date))
-                        )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(bottom = 24.dp)
+                    ) {
+                        items(
+                            items = uiState.transactions,
+                            key = { it.id }
+                        ) { item ->
+                            TransactionItem(
+                                item = item,
+                                formattedDate = dateFormatter.format(Date(item.date))
+                            )
+                        }
                     }
                 }
             }
         }
     }
 
-    // Date Picker Dialog
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState()
         DatePickerDialog(

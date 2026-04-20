@@ -26,7 +26,7 @@ import androidx.compose.ui.window.Dialog
 import com.example.expensemanager.R
 import com.example.expensemanager.designsystem.theme.AppIcons
 import com.example.expensemanager.designsystem.theme.ExpenseRed
-import com.example.expensemanager.utils.format.formatCurrency
+import com.example.expensemanager.utils.format.formatWithLocalCurrency
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -98,9 +98,11 @@ fun CategoryHistoryDialogUI(
         containerColor = Color.White,
         title = { Text("History: $categoryName", fontWeight = FontWeight.Bold) },
         text = {
-            Column(modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(max = 400.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 400.dp)
+            ) {
                 if (transactions.isEmpty()) {
                     Text(
                         "No transactions in this month.",
@@ -113,7 +115,7 @@ fun CategoryHistoryDialogUI(
                                 modifier = Modifier.clickable { onEditTransaction(item) },
                                 headlineContent = {
                                     Text(
-                                        formatCurrency(item.amount),
+                                        text = item.amount.formatWithLocalCurrency(),
                                         fontWeight = FontWeight.Bold
                                     )
                                 },

@@ -39,7 +39,6 @@ fun BudgetCategoryList(
             Card(
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(1.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onItemClick(item) }

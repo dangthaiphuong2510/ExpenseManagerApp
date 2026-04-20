@@ -22,25 +22,7 @@ class AuthViewModel @Inject constructor(
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
-    // Regex: At least 1 letter, 1 number, and minimum 8 characters
-    private val passwordPattern = "^(?=.*[A-Za-z])(?=.*\\d).{8,}$".toRegex()
-
-    private fun isValidPassword(password: String): Boolean {
-        return password.matches(passwordPattern)
-    }
-
     fun login(email: String, pass: String) {
-        if (email.isBlank() || pass.isBlank()) {
-            _authState.value = AuthState.Error("Please enter email and password")
-            return
-        }
-
-        // Apply same constraint to Login
-        if (!isValidPassword(pass)) {
-            _authState.value = AuthState.Error("Password must be at least 8 characters and contain both letters and numbers")
-            return
-        }
-
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
@@ -48,33 +30,17 @@ class AuthViewModel @Inject constructor(
                 _authState.value = AuthState.Success
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(
-                    e.localizedMessage ?: "Login failed. Check email and password."
+                    e.localizedMessage ?: "Login failed. Please check your credentials."
                 )
             }
         }
     }
 
     fun register(email: String, pass: String, confirmPass: String, fullName: String) {
-        if (email.isBlank() || pass.isBlank() || confirmPass.isBlank() || fullName.isBlank()) {
-            _authState.value = AuthState.Error("Please fill in all fields")
-            return
-        }
-
-        // 1. Check if password and confirm password match
-        if (pass != confirmPass) {
-            _authState.value = AuthState.Error("Passwords do not match")
-            return
-        }
-
-        // 2. Updated Constraint: Minimum 8 characters + Alphanumeric
-        if (!isValidPassword(pass)) {
-            _authState.value = AuthState.Error("Password must be at least 8 characters and contain both letters and numbers")
-            return
-        }
-
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
+                // Create user
                 val result = auth.createUserWithEmailAndPassword(email, pass).await()
 
                 val profileUpdates = userProfileChangeRequest {
@@ -85,7 +51,7 @@ class AuthViewModel @Inject constructor(
                 _authState.value = AuthState.Success
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(
-                    e.localizedMessage ?: "Registration failed."
+                    e.localizedMessage ?: "Registration failed. Try a different email."
                 )
             }
         }
@@ -100,7 +66,7 @@ class AuthViewModel @Inject constructor(
                 _authState.value = AuthState.Success
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(
-                    e.localizedMessage ?: "Google Sign-In failed"
+                    e.localizedMessage ?: "Google Authentication failed"
                 )
             }
         }
@@ -110,13 +76,12 @@ class AuthViewModel @Inject constructor(
         _authState.value = AuthState.Idle
     }
 
-    fun isUserLoggedIn(): Boolean {
-        return auth.currentUser != null
-    }
+    fun isUserLoggedIn(): Boolean = auth.currentUser != null
 
-    fun getCurrentUserName(): String {
-        return auth.currentUser?.displayName ?: "User"
-    }
+    fun getCurrentUserName(): String = auth.currentUser?.displayName ?: "User"
+
+    fun getCurrentUserEmail(): String = auth.currentUser?.email ?: ""
+
 
     fun logout() {
         auth.signOut()
