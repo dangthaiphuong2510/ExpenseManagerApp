@@ -11,6 +11,7 @@ import com.example.expensemanager.data.remote.api.ApiService
 import com.example.expensemanager.designsystem.theme.AppIcons
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -34,7 +35,6 @@ class AppRepositoryImpl @Inject constructor(
 
     private fun parseDate(dateStr: String): Long {
         return try {
-            // Kiểm tra nếu là chuỗi số (timestamp) thì chuyển thẳng
             dateStr.toLongOrNull() ?: sdf.parse(dateStr)?.time ?: System.currentTimeMillis()
         } catch (e: Exception) {
             System.currentTimeMillis()
@@ -68,19 +68,25 @@ class AppRepositoryImpl @Inject constructor(
     }
 
     override suspend fun insertLocalTransaction(transaction: TransactionEntity) {
-        transactionDao.insertTransaction(transaction)
+        withContext(Dispatchers.IO) {
+            transactionDao.insertTransaction(transaction)
+        }
     }
 
     override suspend fun updateLocalTransaction(transaction: TransactionEntity) {
-        transactionDao.updateTransaction(transaction)
+        withContext(Dispatchers.IO) {
+            transactionDao.updateTransaction(transaction)
+        }
     }
 
     override suspend fun deleteOnlyBudget(category: String, month: Int, year: Int) {
-        transactionDao.deleteOnlyBudget(
-            category = category,
-            month = formatMonth(month),
-            year = year.toString()
-        )
+        withContext(Dispatchers.IO) {
+            transactionDao.deleteOnlyBudget(
+                category = category,
+                month = formatMonth(month),
+                year = year.toString()
+            )
+        }
     }
 
     override suspend fun deleteTransactionsByCategoryAndMonth(
@@ -88,11 +94,13 @@ class AppRepositoryImpl @Inject constructor(
         month: Int,
         year: Int
     ) {
-        transactionDao.deleteTransactionsByCategoryAndMonth(
-            category = categoryName,
-            month = formatMonth(month),
-            year = year.toString()
-        )
+        withContext(Dispatchers.IO) {
+            transactionDao.deleteTransactionsByCategoryAndMonth(
+                category = categoryName,
+                month = formatMonth(month),
+                year = year.toString()
+            )
+        }
     }
 
     override fun getAllLocalTransactions(): Flow<List<TransactionEntity>> {
@@ -100,15 +108,21 @@ class AppRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deleteTransactionById(id: Int) {
-        transactionDao.deleteTransactionById(id)
+        withContext(Dispatchers.IO) {
+            transactionDao.deleteTransactionById(id)
+        }
     }
 
     override suspend fun deleteAllTransactions() {
-        transactionDao.deleteAllTransactions()
+        withContext(Dispatchers.IO) {
+            transactionDao.deleteAllTransactions()
+        }
     }
 
     override suspend fun deleteTransactionsByCategory(categoryName: String) {
-        transactionDao.deleteTransactionByCategory(categoryName)
+        withContext(Dispatchers.IO) {
+            transactionDao.deleteTransactionByCategory(categoryName)
+        }
     }
 
     override fun getTransactions(): Flow<Result<List<TransactionResponse>>> = flow {
@@ -183,39 +197,63 @@ class AppRepositoryImpl @Inject constructor(
         }
     }.flowOn(Dispatchers.IO)
 
-    // --- Category Logic ---
+    //Category Logic
 
     override fun getAllCategories(): Flow<List<CategoryEntity>> {
         return categoryDao.getAllCategories().flowOn(Dispatchers.IO)
     }
 
     override suspend fun addCategory(name: String, iconName: String, isExpense: Boolean) {
-        categoryDao.insertCategory(CategoryEntity(name, iconName, isExpense))
+        withContext(Dispatchers.IO) {
+            categoryDao.insertCategory(CategoryEntity(name, iconName, isExpense))
+        }
     }
 
     override suspend fun deleteCategory(name: String) {
-        categoryDao.deleteCategoryByName(name)
-        transactionDao.deleteTransactionByCategory(name)
+        withContext(Dispatchers.IO) {
+            categoryDao.deleteCategoryByName(name)
+            transactionDao.deleteTransactionByCategory(name)
+        }
     }
 
-    //budget logic
+    // Budget Logic
 
     override fun getBudgets(month: Int, year: Int): Flow<List<BudgetEntity>> {
         return budgetDao.getBudgets(month, year).flowOn(Dispatchers.IO)
     }
 
     override suspend fun upsertBudget(category: String, amount: Double, month: Int, year: Int) {
-        budgetDao.deleteBudget(category, month, year)
-        budgetDao.insertBudget(
-            BudgetEntity(category = category, amount = amount, month = month, year = year)
-        )
+        withContext(Dispatchers.IO) {
+            budgetDao.deleteBudget(category, month, year)
+            budgetDao.insertBudget(
+                BudgetEntity(category = category, amount = amount, month = month, year = year)
+            )
+        }
     }
 
     override suspend fun deleteBudget(category: String, month: Int, year: Int) {
-        budgetDao.deleteBudget(category, month, year)
+        withContext(Dispatchers.IO) {
+            budgetDao.deleteBudget(category, month, year)
+        }
     }
 
-    // --- User Logic ---
+    override suspend fun deleteAllBudgets() {
+        withContext(Dispatchers.IO) {
+            budgetDao.deleteAllBudgets()
+        }
+    }
+
+    // --- Global Management ---
+
+    override suspend fun clearAllLocalData() {
+        withContext(Dispatchers.IO) {
+            transactionDao.deleteAllTransactions()
+            budgetDao.deleteAllBudgets()
+
+        }
+    }
+
+    //User Logic
 
     override fun getUserProfile(): Flow<Result<UserResponse>> = flow {
         try {

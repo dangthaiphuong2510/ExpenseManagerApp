@@ -12,11 +12,10 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.expensemanager.R
 import com.example.expensemanager.designsystem.theme.ExpenseRed
-import java.text.DecimalFormat
+import com.example.expensemanager.utils.format.formatWithLocalCurrency
 
 @Composable
 fun BudgetSummaryCard(
@@ -27,7 +26,6 @@ fun BudgetSummaryCard(
 ) {
     Card(
         shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -58,7 +56,7 @@ fun BudgetSummaryCard(
                 }
                 val percent = if (totalLimit == 0.0) 0 else (totalSpent * 100 / totalLimit).toInt()
                 Text(
-                    "$percent%",
+                    text = "$percent%",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Black
                 )
@@ -67,20 +65,20 @@ fun BudgetSummaryCard(
             Spacer(Modifier.width(20.dp))
             Column {
                 Text(
-                    stringResource(R.string.remaining),
+                    text = stringResource(R.string.remaining),
                     style = MaterialTheme.typography.labelMedium,
                     color = Color.Gray
                 )
                 val remaining = totalLimit - totalSpent
                 Text(
-                    DecimalFormat("#,###").format(remaining.toInt()) + " đ",
+                    text = remaining.formatWithLocalCurrency(),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Black,
                     color = if (remaining < 0) ExpenseRed else MaterialTheme.colorScheme.primary
                 )
                 HorizontalDivider(Modifier.padding(vertical = 8.dp), thickness = 0.5.dp)
                 Text(
-                    "Total Limit: ${DecimalFormat("#,###").format(totalLimit.toInt())} đ",
+                    text = stringResource(R.string.total_limit) + ": ${totalLimit.formatWithLocalCurrency()}",
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.Gray
                 )

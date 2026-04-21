@@ -22,14 +22,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.expensemanager.R
 import com.example.expensemanager.designsystem.theme.AppIcons
-import com.example.expensemanager.utils.formatCurrency
+import com.example.expensemanager.utils.format.formatWithLocalCurrency
 
 @Composable
 fun ReportScreen(viewModel: ReportViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDatePicker by remember { mutableStateOf(false) }
 
-    // Chỉ cần lưu tên và màu của Category được chọn
+    // Lưu tên và màu của Category được chọn để hiển thị chi tiết
     var selectedCategoryName by remember { mutableStateOf<String?>(null) }
     var selectedCategoryColor by remember { mutableStateOf(Color.Gray) }
 
@@ -42,13 +42,12 @@ fun ReportScreen(viewModel: ReportViewModel = hiltViewModel()) {
     )
 
     if (selectedCategoryName != null) {
-        // Lấy dữ liệu lịch sử thực tế từ ViewModel thay vì dùng giá trị ảo
+        // Lấy dữ liệu lịch sử thực tế từ ViewModel
         val historyData = uiState.categoryHistory[selectedCategoryName!!] ?: emptyList()
 
         ReportDetailScreen(
             categoryName = selectedCategoryName!!,
             categoryColor = selectedCategoryColor,
-            // Truyền toàn bộ danh sách lịch sử 6 tháng vào đây
             historyData = historyData,
             selectedMonth = uiState.selectedMonth,
             onBack = { selectedCategoryName = null }
@@ -96,7 +95,6 @@ fun ReportScreen(viewModel: ReportViewModel = hiltViewModel()) {
                         )
                         Card(
                             shape = RoundedCornerShape(24.dp),
-                            elevation = CardDefaults.cardElevation(1.dp)
                         ) {
                             SimplePieChart(
                                 data = uiState.categoryData,
@@ -117,7 +115,6 @@ fun ReportScreen(viewModel: ReportViewModel = hiltViewModel()) {
                                 .clickable {
                                     selectedCategoryName = name
                                     selectedCategoryColor = color
-                                    // Không cần lưu selectedCategoryAmount nữa vì sẽ lấy từ historyMap
                                 },
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -147,7 +144,7 @@ fun ReportScreen(viewModel: ReportViewModel = hiltViewModel()) {
                                 }
 
                                 Text(
-                                    text = formatCurrency(amount),
+                                    text = amount.formatWithLocalCurrency(),
                                     fontWeight = FontWeight.ExtraBold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )

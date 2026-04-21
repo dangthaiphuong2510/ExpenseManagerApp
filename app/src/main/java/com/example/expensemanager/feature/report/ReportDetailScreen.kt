@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.expensemanager.R
 import com.example.expensemanager.designsystem.theme.AppIcons
-import com.example.expensemanager.utils.formatCurrency
+import com.example.expensemanager.utils.format.formatWithLocalCurrency
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
@@ -61,14 +61,13 @@ fun ReportDetailScreen(
             Card(
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(1.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        stringResource(R.string.recent_spending_fluctuations),
+                        text = stringResource(R.string.recent_spending_fluctuations),
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Start
@@ -85,7 +84,10 @@ fun ReportDetailScreen(
                         historyData.forEach { (month, value) ->
                             val isSelected = month == selectedMonth
                             val targetHeight = ((value / maxAmount) * 140).dp
-                            val animatedHeight by animateDpAsState(targetValue = targetHeight, label = "barHeight")
+                            val animatedHeight by animateDpAsState(
+                                targetValue = targetHeight,
+                                label = "barHeight"
+                            )
 
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -93,7 +95,7 @@ fun ReportDetailScreen(
                             ) {
                                 if (value > 0) {
                                     Text(
-                                        text = formatCurrency(value),
+                                        text = value.formatWithLocalCurrency(),
                                         fontSize = 7.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = if (isSelected) categoryColor else Color.Gray,
@@ -113,13 +115,15 @@ fun ReportDetailScreen(
                                         .background(
                                             color = if (isSelected) categoryColor
                                             else categoryColor.copy(alpha = 0.3f),
-                                            shape = RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp)
+                                            shape = RoundedCornerShape(
+                                                topStart = 6.dp,
+                                                topEnd = 6.dp
+                                            )
                                         )
                                 )
 
                                 Spacer(Modifier.height(8.dp))
 
-                                // 5. Tên tháng
                                 Text(
                                     text = month.month.getDisplayName(
                                         TextStyle.SHORT,

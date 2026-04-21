@@ -15,7 +15,7 @@ import com.example.expensemanager.data.local.entity.TransactionEntity
 import com.example.expensemanager.designsystem.theme.AppIcons
 import com.example.expensemanager.designsystem.theme.ExpenseRed
 import com.example.expensemanager.designsystem.theme.IncomeGreen
-import com.example.expensemanager.utils.formatCurrency
+import com.example.expensemanager.utils.format.formatWithLocalCurrency
 
 @Composable
 fun TransactionItem(item: TransactionEntity, formattedDate: String) {
@@ -23,7 +23,6 @@ fun TransactionItem(item: TransactionEntity, formattedDate: String) {
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(1.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -52,7 +51,7 @@ fun TransactionItem(item: TransactionEntity, formattedDate: String) {
             }
 
             Text(
-                text = (if (isIncome) "+" else "-") + formatCurrency(item.amount),
+                text = (if (isIncome) "+" else "-") + item.amount.formatWithLocalCurrency(),
                 fontWeight = FontWeight.Black,
                 color = if (isIncome) IncomeGreen else ExpenseRed,
                 fontSize = 16.sp
