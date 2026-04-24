@@ -41,7 +41,7 @@ class AppRepositoryImpl @Inject constructor(
         }
     }
 
-    // --- Transaction Logic ---
+    //Transaction Logic
 
     override fun getTransactionsByMonth(month: Int, year: Int): Flow<List<TransactionEntity>> {
         return transactionDao
@@ -67,7 +67,7 @@ class AppRepositoryImpl @Inject constructor(
         return transactionDao.getTransactionById(id).flowOn(Dispatchers.IO)
     }
 
-    override suspend fun insertLocalTransaction(transaction: TransactionEntity) {
+    override suspend fun insertTransaction(transaction: TransactionEntity) {
         withContext(Dispatchers.IO) {
             transactionDao.insertTransaction(transaction)
         }
@@ -103,6 +103,18 @@ class AppRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateTransactionCategoryName(oldName: String, newName: String) {
+        withContext(Dispatchers.IO) {
+            transactionDao.updateCategoryName(oldName, newName)
+        }
+    }
+
+    override suspend fun updateTransactionIconByCategory(categoryName: String, newIcon: String) {
+        withContext(Dispatchers.IO) {
+            transactionDao.updateIconByCategory(categoryName, newIcon)
+        }
+    }
+
     override fun getAllLocalTransactions(): Flow<List<TransactionEntity>> {
         return transactionDao.getAllTransactions().flowOn(Dispatchers.IO)
     }
@@ -128,7 +140,7 @@ class AppRepositoryImpl @Inject constructor(
     override fun getTransactions(): Flow<Result<List<TransactionResponse>>> = flow {
         try {
             val response = apiService.getTransactions()
-            val entities = response.map { it ->
+            val entities = response.map {
                 TransactionEntity(
                     id = 0,
                     amount = it.amount,
@@ -167,7 +179,6 @@ class AppRepositoryImpl @Inject constructor(
         transactionDao.insertTransaction(localEntity)
 
         val formattedDate = formatDate(date)
-
         try {
             val response = apiService.addTransaction(
                 TransactionRequest(
@@ -212,11 +223,10 @@ class AppRepositoryImpl @Inject constructor(
     override suspend fun deleteCategory(name: String) {
         withContext(Dispatchers.IO) {
             categoryDao.deleteCategoryByName(name)
-            transactionDao.deleteTransactionByCategory(name)
         }
     }
 
-    // Budget Logic
+    //Budget Logic
 
     override fun getBudgets(month: Int, year: Int): Flow<List<BudgetEntity>> {
         return budgetDao.getBudgets(month, year).flowOn(Dispatchers.IO)
@@ -237,23 +247,25 @@ class AppRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateBudgetCategoryName(oldName: String, newName: String) {
+        withContext(Dispatchers.IO) {
+        }
+    }
+
     override suspend fun deleteAllBudgets() {
         withContext(Dispatchers.IO) {
             budgetDao.deleteAllBudgets()
         }
     }
 
-    // --- Global Management ---
+    //Management & User
 
     override suspend fun clearAllLocalData() {
         withContext(Dispatchers.IO) {
             transactionDao.deleteAllTransactions()
             budgetDao.deleteAllBudgets()
-
         }
     }
-
-    //User Logic
 
     override fun getUserProfile(): Flow<Result<UserResponse>> = flow {
         try {

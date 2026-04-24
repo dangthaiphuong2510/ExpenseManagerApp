@@ -2,6 +2,7 @@ package com.example.expensemanager.feature.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.expensemanager.data.local.datastore.CurrencyManager
 import com.example.expensemanager.data.local.entity.TransactionEntity
 import com.example.expensemanager.data.remote.repository.AppRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,12 +17,14 @@ data class HistoryUiState(
     val isLoading: Boolean = false,
     val searchQuery: String = "",
     val selectedMonth: Int = 0,
-    val selectedYear: Int = 0
+    val selectedYear: Int = 0,
+    val currencyCode: String = "USD"
 )
 
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
-    private val repository: AppRepository
+    private val repository: AppRepository,
+    private val currencyManager: CurrencyManager
 ) : ViewModel() {
 
     private val calendar = Calendar.getInstance()
@@ -33,33 +36,42 @@ class HistoryViewModel @Inject constructor(
     val historyState: StateFlow<HistoryUiState> = combine(
         _selectedMonth,
         _selectedYear,
-        _searchQuery
-    ) { month, year, query ->
-        Triple(month, year, query)
-    }.flatMapLatest { (month, year, query) ->
-        repository.getTransactionsByMonth(month, year)
+        _searchQuery,
+        currencyManager.currencySymbol
+    ) { month, year, query, code ->
+        DataParams(month, year, query, code)
+    }.flatMapLatest { params ->
+        repository.getTransactionsByMonth(params.month, params.year)
             .map { transactions ->
-                val filteredTransactions = if (query.isEmpty()) {
+                val filteredTransactions = if (params.query.isEmpty()) {
                     transactions
                 } else {
                     transactions.filter { item ->
-                        val categoryMatch = item.category.contains(query, ignoreCase = true)
-                        val noteMatch = item.description?.contains(query, ignoreCase = true) ?: false
+                        val categoryMatch = item.category.contains(params.query, ignoreCase = true)
+                        val noteMatch = item.description.contains(params.query, ignoreCase = true)
                         categoryMatch || noteMatch
                     }
                 }
                 HistoryUiState(
-                    transactions = filteredTransactions,
+                    transactions = filteredTransactions.sortedByDescending { it.date },
                     isLoading = false,
-                    searchQuery = query,
-                    selectedMonth = month,
-                    selectedYear = year
+                    searchQuery = params.query,
+                    selectedMonth = params.month,
+                    selectedYear = params.year,
+                    currencyCode = params.code
                 )
             }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = HistoryUiState(isLoading = true)
+    )
+
+    private data class DataParams(
+        val month: Int,
+        val year: Int,
+        val query: String,
+        val code: String
     )
 
     fun previousMonth() {
@@ -92,12 +104,6 @@ class HistoryViewModel @Inject constructor(
     fun deleteTransaction(id: Int) {
         viewModelScope.launch {
             repository.deleteTransactionById(id)
-        }
-    }
-
-    fun clearAllHistory() {
-        viewModelScope.launch {
-            repository.deleteAllTransactions()
         }
     }
 }

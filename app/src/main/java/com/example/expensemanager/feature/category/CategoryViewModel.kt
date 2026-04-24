@@ -2,6 +2,7 @@ package com.example.expensemanager.feature.category
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.expensemanager.data.local.datastore.CurrencyManager
 import com.example.expensemanager.data.remote.repository.AppRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -19,40 +20,58 @@ data class TransactionItem(
     val type: String
 )
 
+data class CategoryItem(
+    val name: String,
+    val iconName: String,
+    val isExpense: Boolean
+)
+
 data class CategoryUiState(
-    val totalBalance: Double? = null,
-    val totalIncome: Double? = null,
-    val totalExpense: Double? = null,
+    val totalBalance: Double = 0.0,
+    val totalIncome: Double = 0.0,
+    val totalExpense: Double = 0.0,
     val categoryTotals: Map<String, Double> = emptyMap(),
     val categories: List<CategoryItem> = emptyList(),
     val allTransactions: List<TransactionItem> = emptyList(),
     val selectedMonth: Int = 0,
     val selectedYear: Int = 0,
+    val currencyCode: String = "USD",
     val isLoading: Boolean = false
 )
 
-data class CategoryItem(val name: String, val iconName: String, val isExpense: Boolean)
-
 @HiltViewModel
 class CategoryViewModel @Inject constructor(
-    private val repository: AppRepository
+    private val repository: AppRepository,
+    private val currencyManager: CurrencyManager
 ) : ViewModel() {
 
     private val calendar = Calendar.getInstance()
     private val _selectedMonth = MutableStateFlow(calendar.get(Calendar.MONTH) + 1)
     private val _selectedYear = MutableStateFlow(calendar.get(Calendar.YEAR))
 
+    private val _errorEvent = MutableSharedFlow<String>()
+    val errorEvent = _errorEvent.asSharedFlow()
+
+    private val _saveSuccess = MutableSharedFlow<Unit>()
+    val saveSuccess = _saveSuccess.asSharedFlow()
+
+    init {
+        checkAndSeedCategories()
+    }
+
     fun setMonthYear(month: Int, year: Int) {
         _selectedMonth.value = month
         _selectedYear.value = year
     }
 
-    init { checkAndSeedCategories() }
-
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<CategoryUiState> = combine(
-        _selectedMonth, _selectedYear
-    ) { month, year -> month to year }.flatMapLatest { (month, year) ->
+        _selectedMonth,
+        _selectedYear,
+        currencyManager.currencySymbol
+    ) { month, year, symbol ->
+        Triple(month, year, symbol)
+    }.flatMapLatest { (month, year, symbol) ->
         combine(
             repository.getTransactionsByMonth(month, year),
             repository.getAllCategories()
@@ -60,8 +79,8 @@ class CategoryViewModel @Inject constructor(
             val income = transactions.filter { it.type == "INCOME" }.sumOf { it.amount }
             val expense = transactions.filter { it.type == "EXPENSE" }.sumOf { it.amount }
 
-            // Dùng name để group chính xác
-            val totals = transactions.groupBy { it.category }.mapValues { it.value.sumOf { t -> t.amount } }
+            val totals = transactions.groupBy { it.category }
+                .mapValues { it.value.sumOf { t -> t.amount } }
 
             CategoryUiState(
                 totalBalance = income - expense,
@@ -74,39 +93,64 @@ class CategoryViewModel @Inject constructor(
                 },
                 selectedMonth = month,
                 selectedYear = year,
+                currencyCode = symbol,
                 isLoading = false
             )
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CategoryUiState(isLoading = true))
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        CategoryUiState(isLoading = true)
+    )
 
-    fun addTransaction(amount: Double, category: String, note: String, isExpense: Boolean, dateMillis: Long) {
+    fun addTransaction(
+        amount: Double,
+        category: String,
+        note: String,
+        isExpense: Boolean,
+        dateMillis: Long
+    ) {
         viewModelScope.launch {
-            val iconName = uiState.value.categories.find { it.name == category }?.iconName ?: "ic_others"
+            if (note.trim().isEmpty()) {
+                _errorEvent.emit("Please enter a note/description!")
+                return@launch
+            }
+            if (amount <= 0) {
+                _errorEvent.emit("Amount must be greater than 0!")
+                return@launch
+            }
+
+            val iconName =
+                uiState.value.categories.find { it.name == category }?.iconName ?: "ic_others"
+
             repository.addTransaction(
-                description = note.ifEmpty { "Transaction" },
-                amount = amount, date = dateMillis, category = category,
-                categoryIcon = iconName, type = if (isExpense) "EXPENSE" else "INCOME"
-            ).collect()
+                description = note.trim(),
+                amount = amount,
+                date = dateMillis,
+                category = category,
+                categoryIcon = iconName,
+                type = if (isExpense) "EXPENSE" else "INCOME"
+            ).collect {
+                _saveSuccess.emit(Unit)
+            }
         }
     }
 
-    // FIX LỖI: Cập nhật giao dịch phải giữ lại Category và Type cũ
     fun updateTransaction(id: Int, amount: Double, note: String, dateMillis: Long) {
         viewModelScope.launch {
-            // 1. Tìm transaction cũ trong list hiện tại
+            if (note.trim().isEmpty()) {
+                _errorEvent.emit("Note cannot be empty!")
+                return@launch
+            }
+
             val oldTx = uiState.value.allTransactions.find { it.id == id }
-
             if (oldTx != null) {
-                // 2. Xóa cái cũ
                 repository.deleteTransactionById(id)
-
-                // 3. Thêm cái mới nhưng phải truyền đúng Category và Type (Expense/Income) cũ
-                val isExpense = oldTx.type == "EXPENSE"
                 addTransaction(
                     amount = amount,
-                    category = oldTx.category, // Quan trọng: Dùng lại category của tx cũ
-                    note = note,
-                    isExpense = isExpense,
+                    category = oldTx.category,
+                    note = note.trim(),
+                    isExpense = oldTx.type == "EXPENSE",
                     dateMillis = dateMillis
                 )
             }
@@ -115,15 +159,32 @@ class CategoryViewModel @Inject constructor(
 
     fun deleteTransaction(id: Int) = viewModelScope.launch {
         repository.deleteTransactionById(id)
+        _saveSuccess.emit(Unit)
     }
 
     fun updateCategory(oldName: String, newName: String, newIcon: String, isExpense: Boolean) {
         viewModelScope.launch {
-            // Lưu ý: Nếu xóa category, các transaction cũ sẽ bị mồ côi nếu repository không xử lý update cascade
+            if (oldName != newName) {
+                repository.updateTransactionCategoryName(oldName, newName)
+            }
+            repository.updateTransactionIconByCategory(newName, newIcon)
             repository.deleteCategory(oldName)
             repository.addCategory(newName, newIcon, isExpense)
+            _saveSuccess.emit(Unit)
         }
     }
+
+    fun deleteCategory(name: String) = viewModelScope.launch {
+        repository.deleteTransactionsByCategory(name)
+        repository.deleteCategory(name)
+        _saveSuccess.emit(Unit)
+    }
+
+    fun addNewCategory(name: String, iconName: String, isExpense: Boolean) =
+        viewModelScope.launch {
+            repository.addCategory(name, iconName, isExpense)
+            _saveSuccess.emit(Unit)
+        }
 
     private fun checkAndSeedCategories() {
         viewModelScope.launch {
@@ -140,9 +201,4 @@ class CategoryViewModel @Inject constructor(
             }
         }
     }
-
-    fun deleteCategory(name: String) = viewModelScope.launch { repository.deleteCategory(name) }
-
-    fun addNewCategory(name: String, iconName: String, isExpense: Boolean) =
-        viewModelScope.launch { repository.addCategory(name, iconName, isExpense) }
 }

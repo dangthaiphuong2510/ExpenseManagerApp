@@ -82,7 +82,7 @@ fun SettingScreen(
                             title = "Currency Unit",
                             trailing = {
                                 Text(
-                                    text = homeState.currencySymbol,
+                                    text = homeState.currencyCode,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
                                 )
@@ -125,7 +125,7 @@ fun SettingScreen(
                 }
             }
 
-            // About Section
+            // About & Account Section
             item { SettingHeader(stringResource(R.string.about)) }
             item {
                 SettingCard {
@@ -133,9 +133,7 @@ fun SettingScreen(
                         SettingItem(
                             iconRes = AppIcons.Info,
                             title = stringResource(R.string.version),
-                            trailing = {
-                                Text("1.0.0", color = Color.Gray)
-                            }
+                            trailing = { Text("1.0.0", color = Color.Gray) }
                         )
                         SettingDivider()
                         SettingItem(
@@ -147,7 +145,6 @@ fun SettingScreen(
                 }
             }
 
-            // Account Section
             item { SettingHeader(stringResource(R.string.account)) }
             item {
                 SettingCard {
@@ -166,6 +163,7 @@ fun SettingScreen(
         }
     }
 
+    // Dialogs
     if (showThemeDialog) {
         ThemeSelectionDialog(
             currentTheme = currentTheme,
@@ -177,7 +175,6 @@ fun SettingScreen(
         )
     }
 
-    // Logic xử lý xóa toàn bộ dữ liệu
     if (showDeleteDialog && isOnline) {
         DeleteConfirmDialog(
             onDismiss = { showDeleteDialog = false },

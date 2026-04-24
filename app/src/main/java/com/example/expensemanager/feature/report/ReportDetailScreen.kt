@@ -30,6 +30,7 @@ fun ReportDetailScreen(
     categoryColor: Color,
     historyData: List<Pair<YearMonth, Double>>,
     selectedMonth: YearMonth,
+    currencyCode: String,
     onBack: () -> Unit
 ) {
     val maxAmount = remember(historyData) {
@@ -72,6 +73,7 @@ fun ReportDetailScreen(
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Start
                     )
+
                     Spacer(modifier = Modifier.height(32.dp))
 
                     Row(
@@ -83,6 +85,8 @@ fun ReportDetailScreen(
                     ) {
                         historyData.forEach { (month, value) ->
                             val isSelected = month == selectedMonth
+
+
                             val targetHeight = ((value / maxAmount) * 140).dp
                             val animatedHeight by animateDpAsState(
                                 targetValue = targetHeight,
@@ -95,7 +99,7 @@ fun ReportDetailScreen(
                             ) {
                                 if (value > 0) {
                                     Text(
-                                        text = value.formatWithLocalCurrency(),
+                                        text = value.formatWithLocalCurrency(currencyCode),
                                         fontSize = 7.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = if (isSelected) categoryColor else Color.Gray,
@@ -139,6 +143,9 @@ fun ReportDetailScreen(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
         }
     }
 }

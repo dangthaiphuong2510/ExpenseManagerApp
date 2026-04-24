@@ -17,7 +17,7 @@ import com.example.expensemanager.core.navigation.AppNavigation
 import com.example.expensemanager.core.network.NetworkConnectivityObserver
 import com.example.expensemanager.data.local.datastore.CurrencyManager
 import com.example.expensemanager.designsystem.theme.AppTheme
-import com.example.expensemanager.utils.format.LocalCurrencySymbol // Đảm bảo import đúng path này
+import com.example.expensemanager.utils.format.LocalCurrencySymbol
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -25,30 +25,23 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    @Inject
-    lateinit var networkConnectivityObserver: NetworkConnectivityObserver
-
-    @Inject
-    lateinit var auth: FirebaseAuth
-
-    @Inject
-    lateinit var currencyManager: CurrencyManager
+    @Inject lateinit var networkConnectivityObserver: NetworkConnectivityObserver
+    @Inject lateinit var auth: FirebaseAuth
+    @Inject lateinit var currencyManager: CurrencyManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val splashScreen = installSplashScreen()
+        installSplashScreen() // Cài đặt splash screen trước super.onCreate
         super.onCreate(savedInstanceState)
-
         actionBar?.hide()
 
+        enableEdgeToEdge()
+
         setContent {
-            val isCurrencySet by currencyManager.isCurrencySet.collectAsStateWithLifecycle(
-                initialValue = false
-            )
+            // Lấy trạng thái từ DataStore
+            val isCurrencySet by currencyManager.isCurrencySet.collectAsStateWithLifecycle(initialValue = false)
+            val currencySymbol by currencyManager.currencySymbol.collectAsStateWithLifecycle(initialValue = "₫")
 
-            val currencySymbol by currencyManager.currencySymbol.collectAsStateWithLifecycle(
-                initialValue = "₫"
-            )
-
+            // Xử lý Theme
             var themeState by rememberSaveable { mutableStateOf("System") }
             val isDarkTheme = when (themeState) {
                 "Dark" -> true
@@ -58,21 +51,16 @@ class MainActivity : ComponentActivity() {
 
             val navController = rememberNavController()
 
+            // Cung cấp Symbol tiền tệ cho toàn bộ App
             CompositionLocalProvider(LocalCurrencySymbol provides currencySymbol) {
                 AppTheme(darkTheme = isDarkTheme) {
                     val backgroundColor = MaterialTheme.colorScheme.background.toArgb()
 
+                    // Cập nhật thanh trạng thái hệ thống theo màu nền của Theme
                     LaunchedEffect(isDarkTheme, backgroundColor) {
                         enableEdgeToEdge(
-                            statusBarStyle = if (!isDarkTheme) {
-                                SystemBarStyle.light(backgroundColor, backgroundColor)
-                            } else {
-                                SystemBarStyle.dark(backgroundColor)
-                            },
-                            navigationBarStyle = SystemBarStyle.auto(
-                                backgroundColor,
-                                backgroundColor
-                            ) { isDarkTheme }
+                            statusBarStyle = SystemBarStyle.auto(backgroundColor, backgroundColor) { isDarkTheme },
+                            navigationBarStyle = SystemBarStyle.auto(backgroundColor, backgroundColor) { isDarkTheme }
                         )
                     }
 

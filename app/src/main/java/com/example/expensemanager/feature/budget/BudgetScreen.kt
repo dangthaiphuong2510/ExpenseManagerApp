@@ -1,8 +1,6 @@
 package com.example.expensemanager.feature.budget
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
@@ -17,7 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.expensemanager.R
-import com.example.expensemanager.utils.format.formatWithLocalCurrency // Tích hợp hàm format mới
+import java.time.Instant
+import java.time.ZoneId
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,9 +24,13 @@ fun BudgetScreen(
     viewModel: BudgetViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val currencyCode = uiState.currencyCode // Lấy mã tiền tệ (VND/USD)
+
     var showDialog by remember { mutableStateOf(false) }
     var selectedCategoryToEdit by remember { mutableStateOf<BudgetItem?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
+
+    val datePickerState = rememberDatePickerState()
 
     val chartColors = listOf(
         MaterialTheme.colorScheme.primary,
@@ -65,14 +68,19 @@ fun BudgetScreen(
                 totalLimit = uiState.totalBudgetLimit,
                 totalSpent = uiState.totalSpent,
                 budgetList = uiState.budgetList,
+                currencyCode = currencyCode,
                 chartColors = chartColors
             )
 
             Spacer(Modifier.height(24.dp))
 
-            Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    text = "Categories",
+                    text = stringResource(R.string.category),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -86,6 +94,7 @@ fun BudgetScreen(
                     modifier = Modifier.fillMaxSize(),
                     budgetList = uiState.budgetList,
                     chartColors = chartColors,
+                    currencyCode = currencyCode,
                     onItemClick = { selectedCategoryToEdit = it }
                 )
             }
@@ -94,17 +103,52 @@ fun BudgetScreen(
 
     if (showDialog || selectedCategoryToEdit != null) {
         BudgetActionDialog(
-            title = if (selectedCategoryToEdit != null) "Edit Budget" else "Set Budget",
-            categories = uiState.budgetList.map { it.category },
+            title = if (selectedCategoryToEdit != null)
+                stringResource(R.string.edit_category)
+            else
+                stringResource(R.string.set_budget),
+            categories = uiState.allCategories,
             initialCategory = selectedCategoryToEdit?.category ?: "",
-            initialAmount = selectedCategoryToEdit?.limit?.toLong()?.toString() ?: "",
+            initialAmount = selectedCategoryToEdit?.limit?.toString() ?: "",
             isCategoryFixed = selectedCategoryToEdit != null,
-            onDismiss = { showDialog = false; selectedCategoryToEdit = null },
-            onConfirm = { cat, amt ->
-                viewModel.updateBudget(cat, amt)
+            currencyCode = currencyCode,
+            onDismiss = {
+                showDialog = false
+                selectedCategoryToEdit = null
+            },
+            onConfirm = { cat, amtDouble ->
+                if (cat.isNotEmpty()) {
+                    viewModel.updateBudget(cat, amtDouble)
+                }
                 showDialog = false
                 selectedCategoryToEdit = null
             }
         )
+    }
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val date = Instant.ofEpochMilli(millis)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate()
+                        viewModel.setMonthYear(date.monthValue, date.year)
+                    }
+                    showDatePicker = false
+                }) {
+                    Text(stringResource(R.string.action_ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
     }
 }

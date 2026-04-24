@@ -25,7 +25,8 @@ import com.example.expensemanager.utils.format.formatWithLocalCurrency
 fun SimplePieChart(
     data: List<Pair<String, Double>>,
     chartColors: List<Color>,
-    totalAmount: Double
+    totalAmount: Double,
+    currencyCode: String
 ) {
     Column(
         modifier = Modifier
@@ -57,7 +58,7 @@ fun SimplePieChart(
                     color = Color.Gray
                 )
                 Text(
-                    text = totalAmount.formatWithLocalCurrency(),
+                    text = totalAmount.formatWithLocalCurrency(currencyCode),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -73,6 +74,7 @@ fun CategoryListCard(
     amount: Double,
     percentage: Int,
     color: Color,
+    currencyCode: String,
     onClick: () -> Unit
 ) {
     Card(
@@ -104,7 +106,7 @@ fun CategoryListCard(
                 Text(text = "$percentage%", fontSize = 12.sp, color = Color.Gray)
             }
             Text(
-                text = amount.formatWithLocalCurrency(),
+                text = amount.formatWithLocalCurrency(currencyCode),
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onSurface
             )

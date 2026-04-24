@@ -12,14 +12,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.expensemanager.R
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDeepLink
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.*
+import androidx.navigation.navArgument
+import com.example.expensemanager.R
 import com.example.expensemanager.core.network.ConnectivityObserver
 import com.example.expensemanager.core.network.NetworkConnectivityObserver
 import com.example.expensemanager.designsystem.theme.AppIcons
@@ -42,7 +44,7 @@ fun AppNavigation(
     auth: FirebaseAuth,
     currentTheme: String,
     onThemeChange: (String) -> Unit,
-    isCurrencySet: Boolean // Giá trị từ DataStore truyền từ MainActivity
+    isCurrencySet: Boolean
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -54,7 +56,8 @@ fun AppNavigation(
 
     val startDestination = remember(auth.currentUser, isCurrencySet) {
         if (auth.currentUser != null) {
-            if (isCurrencySet) AppDestination.Home.route else "currency_selection"
+            if (isCurrencySet) AppDestination.Home.route
+            else "currency_selection?isFromSetting=false"
         } else {
             "login"
         }
@@ -68,38 +71,44 @@ fun AppNavigation(
         BottomNavItem("Setting", AppIcons.NavSettings, AppDestination.Setting.route)
     )
 
-    val showBottomBar = currentDestination?.route in bottomNavItems.map { it.route }
+    val currentRoute = currentDestination?.route ?: ""
+    val isSelectionMode = currentRoute.contains("selectionMode=true")
+    val showBottomBar =
+        bottomNavItems.any { it.route == currentRoute.split("?")[0] } && !isSelectionMode
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 0.dp
                 ) {
                     bottomNavItems.forEach { item ->
-                        val selected =
-                            currentDestination?.hierarchy?.any { it.route == item.route } == true
+                        val selected = currentDestination?.hierarchy?.any {
+                            it.route?.split("?")?.get(0) == item.route
+                        } == true
+
                         NavigationBarItem(
                             icon = {
                                 AppIcons.MyIcon(
                                     resourceId = item.icon,
                                     tint = if (selected) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(0.8f)
+                                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(0.7f)
                                 )
                             },
                             label = {
                                 Text(
                                     text = item.label,
                                     style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                    fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Medium,
                                     color = if (selected) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(0.8f)
+                                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(0.7f)
                                 )
                             },
                             selected = selected,
+                            alwaysShowLabel = true,
                             onClick = {
                                 if (!selected) {
                                     navController.navigate(item.route) {
@@ -110,7 +119,12 @@ fun AppNavigation(
                                         restoreState = true
                                     }
                                 }
-                            }
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer.copy(
+                                    alpha = 0.5f
+                                )
+                            )
                         )
                     }
                 }
@@ -124,23 +138,19 @@ fun AppNavigation(
                 modifier = Modifier.fillMaxSize()
             ) {
 
-            composable("login") {
-                LoginScreen(
-                    isOnline = isOnline,
-                    onLoginSuccess = {
-                        if (isCurrencySet) {
-                            navController.navigate(AppDestination.Home.route) {
+                composable("login") {
+                    LoginScreen(
+                        isOnline = isOnline,
+                        onLoginSuccess = {
+                            val dest = if (isCurrencySet) AppDestination.Home.route
+                            else "currency_selection?isFromSetting=false"
+                            navController.navigate(dest) {
                                 popUpTo("login") { inclusive = true }
                             }
-                        } else {
-                            navController.navigate("currency_selection") {
-                                popUpTo("login") { inclusive = true }
-                            }
-                        }
-                    },
-                    onGoToRegister = { navController.navigate("register") }
-                )
-            }
+                        },
+                        onGoToRegister = { navController.navigate("register") }
+                    )
+                }
 
                 composable("register") {
                     RegisterScreen(
@@ -155,13 +165,21 @@ fun AppNavigation(
                     )
                 }
 
-                composable("currency_selection") {
-                    CurrencySelectionScreen(
-                        onFinished = {
-                            val hasBackstack = navController.previousBackStackEntry != null
-                            val fromSetting = navController.previousBackStackEntry?.destination?.route == AppDestination.Setting.route
+                composable(
+                    route = "currency_selection?isFromSetting={isFromSetting}",
+                    arguments = listOf(
+                        navArgument("isFromSetting") {
+                            type = NavType.BoolType
+                            defaultValue = false
+                        }
+                    )
+                ) { backStackEntry ->
+                    val isFromSetting = backStackEntry.arguments?.getBoolean("isFromSetting") ?: false
 
-                            if (fromSetting) {
+                    CurrencySelectionScreen(
+                        isFromSetting = isFromSetting,
+                        onFinished = {
+                            if (isFromSetting) {
                                 navController.popBackStack()
                             } else {
                                 navController.navigate(AppDestination.Home.route) {
@@ -178,28 +196,36 @@ fun AppNavigation(
                         onNavigateToBudget = { navController.navigate(AppDestination.Budget.route) },
                         onNavigateToReport = { navController.navigate(AppDestination.Report.route) },
                         onNavigateToSetting = { navController.navigate(AppDestination.Setting.route) },
-                        onNavigateToAddTransaction = { navController.navigate("add_transaction") },
+                        onNavigateToAddTransaction = {
+                            navController.navigate("${AppDestination.Category.route}?selectionMode=true")
+                        },
                         isOnline = isOnline
                     )
                 }
 
-                composable(AppDestination.History) {
-                    HistoryScreen(
-                        onBack = { navController.popBackStack() },
+                composable(
+                    route = "${AppDestination.Category.route}?selectionMode={selectionMode}",
+                    arguments = listOf(
+                        navArgument("selectionMode") {
+                            type = NavType.BoolType
+                            defaultValue = false
+                        }
+                    )
+                ) { backStackEntry ->
+                    val selectionMode =
+                        backStackEntry.arguments?.getBoolean("selectionMode") ?: false
+                    CategoryScreen(
+                        isSelectionMode = selectionMode,
+                        onBack = { navController.popBackStack() }
                     )
                 }
 
-                composable(AppDestination.Category) {
-                    CategoryScreen()
+                composable(AppDestination.History) {
+                    HistoryScreen(onBack = { navController.popBackStack() })
                 }
 
-                composable(AppDestination.Budget) {
-                    BudgetScreen()
-                }
-
-                composable(AppDestination.Report) {
-                    ReportScreen()
-                }
+                composable(AppDestination.Budget) { BudgetScreen() }
+                composable(AppDestination.Report) { ReportScreen() }
 
                 composable(AppDestination.Setting) {
                     SettingScreen(
@@ -207,7 +233,8 @@ fun AppNavigation(
                         currentTheme = currentTheme,
                         onThemeChange = onThemeChange,
                         onNavigateToCurrencySelection = {
-                            navController.navigate("currency_selection")
+                            // Khi đi từ Setting, truyền isFromSetting = true
+                            navController.navigate("currency_selection?isFromSetting=true")
                         },
                         onLogout = {
                             auth.signOut()

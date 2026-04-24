@@ -3,9 +3,11 @@ package com.example.expensemanager.feature.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.expensemanager.data.local.datastore.CurrencyManager
+import com.example.expensemanager.data.local.entity.BudgetEntity
 import com.example.expensemanager.data.local.entity.TransactionEntity
 import com.example.expensemanager.data.remote.repository.AppRepository
-import com.example.expensemanager.utils.format.formatAmount
+import com.example.expensemanager.feature.category.CategoryItem
+import com.example.expensemanager.utils.format.CurrencyUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
@@ -17,8 +19,11 @@ data class HomeUiState(
     val totalBalance: Double? = null,
     val totalIncome: Double? = null,
     val totalExpense: Double? = null,
-    val currencySymbol: String = "₫",
+    // Đổi tên từ currencySymbol thành currencyCode để chuẩn ISO
+    val currencyCode: String = "USD",
     val recentTransactions: List<TransactionEntity> = emptyList(),
+    val allCategories: List<CategoryItem> = emptyList(),
+    val categoryTotals: Map<String, Double> = emptyMap(),
     val isLoading: Boolean = false,
     val isInitialLoad: Boolean = true,
     val notificationCount: Int = 0,
@@ -35,15 +40,14 @@ class HomeViewModel @Inject constructor(
     val homeState = _homeState.asStateFlow()
 
     private val _notificationsSeen = MutableStateFlow(false)
-
     private var observationJob: Job? = null
 
     init {
-        observeMonthlyTransactions()
+        observeHomeData()
         syncWithApi()
     }
 
-    private fun observeMonthlyTransactions() {
+    private fun observeHomeData() {
         observationJob?.cancel()
 
         observationJob = viewModelScope.launch {
@@ -58,31 +62,38 @@ class HomeViewModel @Inject constructor(
                 set(Calendar.MILLISECOND, 0)
             }.timeInMillis
 
-            val dataFlow = repository.getTransactionsByMonth(month, year)
+            val monthlyDataFlow = repository.getTransactionsByMonth(month, year)
                 .combine(repository.getBudgets(month, year)) { transactions, budgets ->
-                    val income = transactions.filter { it.type.contains("INCOME", ignoreCase = true) }.sumOf { it.amount }
-                    val expense = transactions.filter { it.type.contains("EXPENSE", ignoreCase = true) }.sumOf { it.amount }
-                    val sortedList = transactions.sortedByDescending { it.date }
+                    val income = transactions.filter { it.type.equals("INCOME", true) }.sumOf { it.amount }
+                    val expense = transactions.filter { it.type.equals("EXPENSE", true) }.sumOf { it.amount }
+                    val totals = transactions.groupBy { it.category }
+                        .mapValues { entry -> entry.value.sumOf { it.amount } }
 
                     ResultData(
                         income = income,
                         expense = expense,
-                        sortedList = sortedList,
+                        sortedList = transactions.sortedByDescending { it.date },
                         rawTransactions = transactions,
-                        rawBudgets = budgets
+                        rawBudgets = budgets,
+                        categoryTotals = totals
                     )
                 }
 
+            val categoriesFlow = repository.getAllCategories().map { list ->
+                list.map { CategoryItem(it.name, it.iconName, it.isExpense) }
+            }
+
+            // Lắng nghe sự thay đổi của currencySymbol (giờ đóng vai trò là Code)
             combine(
-                dataFlow,
+                monthlyDataFlow,
+                categoriesFlow,
                 _notificationsSeen,
                 currencyManager.currencySymbol
-            ) { result, isSeen, symbol ->
+            ) { result, categories, isSeen, code ->
 
                 val warningMessages = mutableListOf<String>()
-
                 val expensesByCategory = result.rawTransactions
-                    .filter { it.type.contains("EXPENSE", ignoreCase = true) }
+                    .filter { it.type.equals("EXPENSE", true) }
                     .groupBy { it.category.trim().lowercase() }
 
                 result.rawBudgets.forEach { budget ->
@@ -90,19 +101,20 @@ class HomeViewModel @Inject constructor(
                     val totalSpent = expensesByCategory[categoryKey]?.sumOf { it.amount } ?: 0.0
 
                     if (budget.amount > 0 && totalSpent > (budget.amount * 0.8)) {
-                        val spentStr = totalSpent.formatAmount(symbol)
-                        val budgetStr = budget.amount.formatAmount(symbol)
-                        warningMessages.add("You have spent $spentStr exceeding your $budgetStr limit for ${budget.category}!")
+                        // SỬ DỤNG FORMATTER MỚI: Tự động thêm ký hiệu dựa trên Code
+                        val spentStr = CurrencyUtils.formatAmount(totalSpent, code)
+                        val budgetStr = CurrencyUtils.formatAmount(budget.amount, code)
+                        warningMessages.add("You have spent $spentStr, exceeding 80% of your $budgetStr limit for ${budget.category}!")
                     }
                 }
 
                 if (result.income == 0.0 && result.expense > 0) {
-                    warningMessages.add("Warning: You are spending money without any income!")
+                    warningMessages.add("Warning: You are spending money without any income recorded!")
                 }
 
                 val hasTransactionToday = result.rawTransactions.any { it.date >= todayStart }
                 if (!hasTransactionToday) {
-                    warningMessages.add("Warning: No transactions have been made today.")
+                    warningMessages.add("You haven't recorded any transactions today.")
                 }
 
                 _homeState.update { currentState ->
@@ -110,8 +122,10 @@ class HomeViewModel @Inject constructor(
                         totalBalance = result.income - result.expense,
                         totalIncome = result.income,
                         totalExpense = result.expense,
-                        currencySymbol = symbol,
+                        currencyCode = code, // Cập nhật Code
                         recentTransactions = result.sortedList.take(4),
+                        allCategories = categories,
+                        categoryTotals = result.categoryTotals,
                         isLoading = false,
                         isInitialLoad = false,
                         notificationCount = if (isSeen) 0 else warningMessages.size,
@@ -120,42 +134,51 @@ class HomeViewModel @Inject constructor(
                 }
             }
                 .onStart { _homeState.update { it.copy(isLoading = true) } }
-                .distinctUntilChanged()
+                .catch { e -> _homeState.update { it.copy(isLoading = false) } }
                 .collect()
         }
     }
 
-    // --- LOGIC CLEAR ALL DATA ---
-    fun clearAllData(onComplete: () -> Unit) {
+    // Logic đổi tiền tệ: Giờ chúng ta truyền ISO CODE (VND, USD) thay vì ký hiệu
+    fun updateCurrency(code: String) {
+        viewModelScope.launch {
+            currencyManager.saveCurrency(code)
+        }
+    }
+
+    // ... (Các hàm addQuickTransaction, clearAllData, refresh giữ nguyên)
+
+    fun addQuickTransaction(amount: Double, note: String, dateMillis: Long, category: String, isExpense: Boolean) {
         viewModelScope.launch {
             try {
-                // 1. Xóa sạch trong Database (Transactions & Budgets)
-                repository.clearAllLocalData()
+                val iconName = _homeState.value.allCategories
+                    .find { it.name == category }?.iconName ?: "other"
 
-                // 2. Reset trạng thái UI về mặc định ngay lập tức
-                _homeState.update { currentState ->
-                    currentState.copy(
-                        totalBalance = 0.0,
-                        totalIncome = 0.0,
-                        totalExpense = 0.0,
-                        recentTransactions = emptyList(),
-                        budgetWarnings = emptyList(),
-                        notificationCount = 0,
-                        isLoading = false
-                    )
-                }
-
-                // 3. Gọi callback để báo UI hiện Toast hoặc tắt Dialog
-                onComplete()
+                val transaction = TransactionEntity(
+                    amount = amount,
+                    category = category,
+                    description = note,
+                    date = dateMillis,
+                    type = if (isExpense) "EXPENSE" else "INCOME",
+                    categoryIcon = iconName
+                )
+                repository.insertTransaction(transaction)
+                refresh()
             } catch (e: Exception) {
                 _homeState.update { it.copy(isLoading = false) }
             }
         }
     }
 
-    fun updateCurrency(symbol: String) {
+    fun clearAllData(onComplete: () -> Unit) {
         viewModelScope.launch {
-            currencyManager.saveCurrency(symbol)
+            try {
+                repository.clearAllLocalData()
+                _homeState.update { HomeUiState() }
+                onComplete()
+            } catch (e: Exception) {
+                _homeState.update { it.copy(isLoading = false) }
+            }
         }
     }
 
@@ -172,8 +195,8 @@ class HomeViewModel @Inject constructor(
         val expense: Double,
         val sortedList: List<TransactionEntity>,
         val rawTransactions: List<TransactionEntity>,
-        val rawBudgets: List<com.example.expensemanager.data.local.entity.BudgetEntity>,
-        val allWarnings: List<String> = emptyList()
+        val rawBudgets: List<BudgetEntity>,
+        val categoryTotals: Map<String, Double>
     )
 
     fun syncWithApi() {
@@ -186,7 +209,7 @@ class HomeViewModel @Inject constructor(
 
     fun refresh() {
         resetNotificationSeen()
-        observeMonthlyTransactions()
+        observeHomeData()
         syncWithApi()
     }
 }

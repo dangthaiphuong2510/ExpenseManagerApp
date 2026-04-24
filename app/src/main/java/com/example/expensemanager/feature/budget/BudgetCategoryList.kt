@@ -17,24 +17,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.expensemanager.designsystem.theme.AppIcons
 import com.example.expensemanager.designsystem.theme.ExpenseRed
-import java.text.DecimalFormat
+import com.example.expensemanager.utils.format.formatWithLocalCurrency
 
 @Composable
 fun BudgetCategoryList(
     modifier: Modifier = Modifier,
     budgetList: List<BudgetItem>,
     chartColors: List<Color>,
+    currencyCode: String,
     onItemClick: (BudgetItem) -> Unit
 ) {
+
     LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(bottom = 20.dp)
     ) {
         itemsIndexed(budgetList) { index, item ->
-            val progress = if (item.limit == 0.0) 0f else (item.spent / item.limit).toFloat()
+            val isOverBudget = item.spent > item.limit && item.limit > 0
+            val actualProgress = if (item.limit == 0.0) 0f else (item.spent / item.limit).toFloat()
+
             val dotColor = chartColors[index % chartColors.size]
-            val progressColor = if (progress > 1f) ExpenseRed else dotColor
+            val alertColor = ExpenseRed
+            val statusColor = if (isOverBudget) alertColor else dotColor
 
             Card(
                 shape = RoundedCornerShape(20.dp),
@@ -43,43 +48,70 @@ fun BudgetCategoryList(
                     .fillMaxWidth()
                     .clickable { onItemClick(item) }
             ) {
-                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier
-                        .size(12.dp)
-                        .background(dotColor, CircleShape))
+                Row(
+                    Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        Modifier
+                            .size(12.dp)
+                            .background(dotColor, CircleShape)
+                    )
+
                     Spacer(Modifier.width(12.dp))
+
                     Column(Modifier.weight(1f)) {
-                        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                            Text(item.category, fontWeight = FontWeight.Bold)
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            Arrangement.SpaceBetween,
+                            Alignment.CenterVertically
+                        ) {
                             Text(
-                                "${(progress * 100).toInt()}%",
-                                style = MaterialTheme.typography.labelMedium
+                                text = item.category,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+
+                            val displayPercent =
+                                if (isOverBudget) 100 else (actualProgress * 100).toInt()
+                            Text(
+                                text = "$displayPercent%",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = if (isOverBudget) alertColor else Color.Gray,
+                                fontWeight = if (isOverBudget) FontWeight.ExtraBold else FontWeight.Medium
                             )
                         }
+
+                        Spacer(Modifier.height(4.dp))
+
                         Text(
-                            "${DecimalFormat("#,###").format(item.spent.toInt())} / ${
-                                DecimalFormat(
-                                    "#,###"
-                                ).format(item.limit.toInt())
-                            } đ",
+                            text = "${item.spent.formatWithLocalCurrency(currencyCode)} / ${
+                                item.limit.formatWithLocalCurrency(currencyCode)
+                            }",
                             style = MaterialTheme.typography.bodySmall,
-                            color = if (progress > 1f) ExpenseRed else Color.Gray
+                            color = if (isOverBudget) alertColor else Color.Gray
                         )
+
+                        Spacer(Modifier.height(8.dp))
+
                         LinearProgressIndicator(
-                            progress = { progress.coerceIn(0f, 1f) },
+                            progress = { actualProgress.coerceIn(0f, 1f) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(8.dp)
-                                .padding(top = 4.dp),
-                            color = progressColor,
+                                .height(8.dp),
+                            color = statusColor,
+                            trackColor = statusColor.copy(alpha = 0.1f),
                             strokeCap = StrokeCap.Round
                         )
                     }
+
+                    Spacer(Modifier.width(8.dp))
+
                     IconButton(onClick = { onItemClick(item) }) {
                         AppIcons.MyIcon(
                             AppIcons.Edit,
-                            size = 18.dp,
-                            tint = MaterialTheme.colorScheme.primary
+                            size = 20.dp,
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                         )
                     }
                 }
