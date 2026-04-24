@@ -18,26 +18,122 @@ import com.example.expensemanager.R
 object AppIcons {
 
     private val ColoredIcons: Set<Int>
-        get() = setOf(
-            Google,
-        )
+        get() = setOf(Google)
 
-    val CategoryIconsList = listOf(
-        "ic_food" to R.drawable.ic_food,
-        "ic_transport" to R.drawable.ic_transport,
-        "ic_shopping" to R.drawable.ic_shopping,
-        "ic_makeup" to R.drawable.ic_makeup,
-        "ic_education" to R.drawable.ic_education,
-        "ic_home" to R.drawable.ic_home,
-        "ic_medical" to R.drawable.ic_medical,
-        "ic_money" to R.drawable.ic_money,
-        "ic_others" to R.drawable.ic_others
+    val IconGroups = mapOf(
+        "Food & Drink" to listOf(
+            "ic_food" to R.drawable.ic_food,
+            "ic_pizza" to R.drawable.ic_food_pizza_slice,
+            "ic_coffee" to R.drawable.ic_food_coffee,
+            "ic_apple" to R.drawable.ic_food_apple,
+            "ic_burger" to R.drawable.ic_food_hamburger_soda,
+            "ic_cake" to R.drawable.ic_food_cake_wedding,
+            "ic_grocery" to R.drawable.ic_food_grocery_basket,
+            "ic_glass" to R.drawable.ic_food_glass_cheers,
+            "ic_noodles" to R.drawable.ic_food_noodles,
+            "ic_croissant" to R.drawable.ic_food_croissant,
+            "ic_chef" to R.drawable.ic_food_hat_chef,
+        ),
+
+        "Transport" to listOf(
+            "ic_transport" to R.drawable.ic_transport,
+            "ic_car" to R.drawable.ic_transport_car_alt,
+            "ic_bike" to R.drawable.ic_transport_biking,
+            "ic_bus" to R.drawable.ic_transport_bus,
+            "ic_truck" to R.drawable.ic_transport_truck,
+            "ic_taxi" to R.drawable.ic_transport_car_alt,
+            "ic_plan" to R.drawable.ic_transport_plane,
+        ),
+
+        "Shopping" to listOf(
+            "ic_shopping" to R.drawable.ic_shopping,
+            "ic_makeup" to R.drawable.ic_makeup,
+            "ic_shirt" to R.drawable.ic_shopping_shirt,
+            "ic_shop_bags" to R.drawable.ic_shopping_bags,
+            "ic_cart" to R.drawable.ic_shopping_cart_heart,
+            "ic_fresher" to R.drawable.ic_shopping_air_freshener,
+            "ic_dress" to R.drawable.ic_shopping_dress,
+            "ic_cream" to R.drawable.ic_shopping_cream,
+        ),
+
+        "Life & Health" to listOf(
+            "ic_education" to R.drawable.ic_education,
+            "ic_medical" to R.drawable.ic_medical,
+            "ic_syringe" to R.drawable.ic_medical_syringe,
+            "ic_tooth" to R.drawable.ic_medical_tooth,
+            "ic_capsules" to R.drawable.ic_medical_capsules,
+            "ic_stethoscope" to R.drawable.ic_medical_stethoscope,
+            "ic_medication" to R.drawable.ic_medical_medication,
+
+            "ic_book" to R.drawable.ic_edu_book,
+            "ic_flask" to R.drawable.ic_edu_flask,
+            "ic_calculator" to R.drawable.ic_edu_calculator,
+            "ic_graduation" to R.drawable.ic_edu_graduation_cap,
+            "ic_globe" to R.drawable.ic_edu_globe_alt,
+            "ic_books" to R.drawable.ic_edu_books_lightbulb,
+            "ic_drawer" to R.drawable.ic_edu_drawer_alt,
+
+        ),
+
+        "Finance" to listOf(
+            "ic_money" to R.drawable.ic_money,
+            "ic_wallet" to R.drawable.ic_wallet,
+            "ic_coin" to R.drawable.ic_money_coins,
+            "ic_money_usd" to R.drawable.ic_money_usd_circle,
+            "ic_trading" to R.drawable.ic_money_trading,
+            "ic_expense" to R.drawable.ic_money_expense,
+            "ic_briefcase" to R.drawable.ic_money_briefcase,
+        ),
+        "Family" to listOf(
+            "ic_family" to R.drawable.ic_family,
+            "ic_family_dryer" to R.drawable.ic_family_dryer,
+            "ic_family_light_ceiling" to R.drawable.ic_family_light_ceiling,
+            "ic_family_light_bulb" to R.drawable.ic_family_sink,
+            "ic_family_light_switch" to R.drawable.ic_family_couch,
+            "ic_family_light_bulb_on" to R.drawable.ic_family_vacuum,
+            "ic_family_light_bulb_off" to R.drawable.ic_family_bed_alt,
+        ),
+
+        "Home" to listOf(
+            "ic_home" to R.drawable.ic_home,
+            "ic_bank" to R.drawable.ic_home_bank,
+            "ic_city" to R.drawable.ic_home_city,
+            "ic_heart" to R.drawable.ic_home_heart,
+            "ic_mosque" to R.drawable.ic_home_mosque,
+            "ic_school" to R.drawable.ic_home_school,
+            "ic_store" to R.drawable.ic_home_house_day,
+        ),
+
+        "Money" to listOf(
+            "ic_money" to R.drawable.ic_money,
+            "ic_wallet" to R.drawable.ic_wallet,
+            "ic_coin" to R.drawable.ic_money_coins,
+            "ic_money_usd" to R.drawable.ic_money_usd_circle,
+            "ic_trading" to R.drawable.ic_money_trading,
+            "ic_expense" to R.drawable.ic_money_expense,
+            "ic_briefcase" to R.drawable.ic_money_briefcase,
+        ),
+
+        "Statistical" to listOf(
+            "ic_report" to R.drawable.ic_report,
+            "ic_chart" to R.drawable.ic_statistical_chart_simple,
+            "ic_chart_pie" to R.drawable.ic_statistical_curve_arrow,
+            "ic_chart_line" to R.drawable.ic_statistical_arrow_grow,
+            "ic_chart_bar" to R.drawable.ic_statistical_revenue_euro,
+            "ic_chart_graph_curve," to R.drawable.ic_statistical_graph_curve,
+
+            ),
+
+        "Others" to listOf(
+            "ic_others" to R.drawable.ic_others
+        )
     )
+
+    val CategoryIconsList: List<Pair<String, Int>> = IconGroups.values.flatten()
 
 
     fun getIconIdByName(iconKey: String?): Int {
         if (iconKey.isNullOrBlank()) return R.drawable.ic_others
-
         val key = iconKey.trim().lowercase()
 
         val resId = CategoryIconsList.find { it.first == key }?.second
@@ -50,7 +146,6 @@ object AppIcons {
 
     fun getIconKeyByName(name: String?): String {
         if (name.isNullOrBlank()) return "ic_others"
-
         val lowerName = name.trim().lowercase()
 
         return when {
@@ -123,6 +218,8 @@ object AppIcons {
     val Info = R.drawable.ic_info
     val Calendar = R.drawable.ic_calendar
     val Search = R.drawable.ic_search
+    val Check = R.drawable.ic_check
+
 
     @Composable
     fun getAddIcon() = ImageVector.vectorResource(R.drawable.ic_add)

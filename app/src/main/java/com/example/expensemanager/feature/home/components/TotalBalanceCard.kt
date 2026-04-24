@@ -20,7 +20,13 @@ import com.example.expensemanager.designsystem.theme.IncomeGreen
 import com.example.expensemanager.utils.format.formatWithLocalCurrency
 
 @Composable
-fun TotalBalanceCard(balance: Double, income: Double, expense: Double, isLoading: Boolean) {
+fun TotalBalanceCard(
+    balance: Double,
+    income: Double,
+    expense: Double,
+    currencyCode: String,
+    isLoading: Boolean
+) {
     Card(
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -32,8 +38,9 @@ fun TotalBalanceCard(balance: Double, income: Double, expense: Double, isLoading
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
             Text(
-                text = if (isLoading) "---" else balance.formatWithLocalCurrency(),
+                text = if (isLoading) "---" else balance.formatWithLocalCurrency(currencyCode),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Black
             )
@@ -44,14 +51,15 @@ fun TotalBalanceCard(balance: Double, income: Double, expense: Double, isLoading
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                BalanceInfo(
+                   BalanceInfo(
                     label = stringResource(R.string.income),
-                    amount = if (isLoading) "---" else income.formatWithLocalCurrency(),
+                    amount = if (isLoading) "---" else income.formatWithLocalCurrency(currencyCode),
                     color = IncomeGreen
                 )
+
                 BalanceInfo(
                     label = stringResource(R.string.expense),
-                    amount = if (isLoading) "---" else expense.formatWithLocalCurrency(),
+                    amount = if (isLoading) "---" else expense.formatWithLocalCurrency(currencyCode),
                     color = ExpenseRed,
                     isEnd = true
                 )

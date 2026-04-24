@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.expensemanager.data.local.entity.TransactionEntity
@@ -18,15 +19,18 @@ import com.example.expensemanager.designsystem.theme.IncomeGreen
 import com.example.expensemanager.utils.format.formatWithLocalCurrency
 
 @Composable
-fun TransactionItem(item: TransactionEntity, formattedDate: String) {
+fun TransactionItem(item: TransactionEntity, currencyCode: String, formattedDate: String) {
     val isIncome = item.type.equals("INCOME", ignoreCase = true)
+
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -46,16 +50,33 @@ fun TransactionItem(item: TransactionEntity, formattedDate: String) {
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = item.category, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
-                Text(text = formattedDate, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    text = item.description.ifBlank { item.category },
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = item.category,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
-            Text(
-                text = (if (isIncome) "+" else "-") + item.amount.formatWithLocalCurrency(),
-                fontWeight = FontWeight.Black,
-                color = if (isIncome) IncomeGreen else ExpenseRed,
-                fontSize = 16.sp
-            )
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = (if (isIncome) "+" else "-") + item.amount.formatWithLocalCurrency(currencyCode),
+                    fontWeight = FontWeight.Black,
+                    color = if (isIncome) IncomeGreen else ExpenseRed,
+                    fontSize = 16.sp
+                )
+                Text(
+                    text = formattedDate,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
         }
     }
 }

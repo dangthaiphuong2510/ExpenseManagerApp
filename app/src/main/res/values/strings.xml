@@ -24,7 +24,7 @@
     <string name="no_transactions_found">No transactions found</string>
     <string name="a_simple_and_powerful_app_to_manage_your_daily_expenses_and_income_efficiently">
         A simple and powerful app to manage your daily expenses and income efficiently.</string>
-    <string name="add_transaction">add_transaction</string>
+    <string name="add_transaction">Add Transaction</string>
 
     //report
     <string name="report_title">Expense Report</string>
@@ -58,6 +58,9 @@
     <string name="account">Account</string>
     <string name="logout">Logout</string>
     <string name="choose_theme">Choose Theme</string>
+    <string name="currency_settings">Currency Settings</string>
+    <string name="select_your_primary_currency">Select your primary currency</string>
+
     //cate
     <string name="add_expense">Add Expense</string>
     <string name="add_income">Add Income</string>
@@ -104,7 +107,6 @@
     <string name="no_history_to_show">No history to show</string>
     <string name="search_transactions">Search Transactions</string>
     <string name="full_name">Full name</string>
-
 
 
 </resources>

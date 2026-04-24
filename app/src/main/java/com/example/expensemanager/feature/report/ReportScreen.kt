@@ -27,9 +27,10 @@ import com.example.expensemanager.utils.format.formatWithLocalCurrency
 @Composable
 fun ReportScreen(viewModel: ReportViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val currencyCode = uiState.currencyCode
+
     var showDatePicker by remember { mutableStateOf(false) }
 
-    // Lưu tên và màu của Category được chọn để hiển thị chi tiết
     var selectedCategoryName by remember { mutableStateOf<String?>(null) }
     var selectedCategoryColor by remember { mutableStateOf(Color.Gray) }
 
@@ -42,7 +43,6 @@ fun ReportScreen(viewModel: ReportViewModel = hiltViewModel()) {
     )
 
     if (selectedCategoryName != null) {
-        // Lấy dữ liệu lịch sử thực tế từ ViewModel
         val historyData = uiState.categoryHistory[selectedCategoryName!!] ?: emptyList()
 
         ReportDetailScreen(
@@ -50,6 +50,7 @@ fun ReportScreen(viewModel: ReportViewModel = hiltViewModel()) {
             categoryColor = selectedCategoryColor,
             historyData = historyData,
             selectedMonth = uiState.selectedMonth,
+            currencyCode = currencyCode,
             onBack = { selectedCategoryName = null }
         )
     } else {
@@ -99,7 +100,8 @@ fun ReportScreen(viewModel: ReportViewModel = hiltViewModel()) {
                             SimplePieChart(
                                 data = uiState.categoryData,
                                 chartColors = chartColors,
-                                totalAmount = uiState.totalAmount
+                                totalAmount = uiState.totalAmount,
+                                currencyCode = currencyCode
                             )
                         }
                     }
@@ -144,7 +146,8 @@ fun ReportScreen(viewModel: ReportViewModel = hiltViewModel()) {
                                 }
 
                                 Text(
-                                    text = amount.formatWithLocalCurrency(),
+                                    // SỬA: Truyền currencyCode để hiện ₫ hoặc $
+                                    text = amount.formatWithLocalCurrency(currencyCode),
                                     fontWeight = FontWeight.ExtraBold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
