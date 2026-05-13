@@ -68,7 +68,6 @@ object AppIcons {
             "ic_book" to R.drawable.ic_edu_book,
             "ic_flask" to R.drawable.ic_edu_flask,
             "ic_calculator" to R.drawable.ic_edu_calculator,
-            "ic_graduation" to R.drawable.ic_edu_graduation_cap,
             "ic_globe" to R.drawable.ic_edu_globe_alt,
             "ic_books" to R.drawable.ic_edu_books_lightbulb,
             "ic_drawer" to R.drawable.ic_edu_drawer_alt,
@@ -199,7 +198,7 @@ object AppIcons {
     val EyeCrossed = R.drawable.ic_eye_crossed
     val User = R.drawable.ic_user
 
-    // --- Action Icons ---
+    //Action Icons
     val Add = R.drawable.ic_add
     val Edit = R.drawable.ic_edit
     val Delete = R.drawable.ic_trash

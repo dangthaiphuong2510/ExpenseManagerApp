@@ -55,12 +55,13 @@ fun CategoryBalanceCard(
                 Text(
                     stringResource(R.string.total_balance),
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = totalBalance.formatWithLocalCurrency(currencyCode),
                     style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Black
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(Modifier.height(16.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -92,7 +93,11 @@ private fun CategoryMiniStat(
     alignment: Alignment.Horizontal = Alignment.Start
 ) {
     Column(horizontalAlignment = alignment) {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         Text(
             text = amount.formatWithLocalCurrency(currencyCode),
             color = color,
@@ -114,16 +119,25 @@ fun CategoryMonthSelector(
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onPreviousMonth) {
-            AppIcons.MyIcon(AppIcons.ChevronLeft, size = 16.dp)
+            AppIcons.MyIcon(
+                AppIcons.ChevronLeft,
+                size = 16.dp,
+                tint = MaterialTheme.colorScheme.onSurface
+            )
         }
         Text(
             text = monthYearText,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.clickable { onCalendarClick() }
         )
         IconButton(onClick = onNextMonth) {
-            AppIcons.MyIcon(AppIcons.ChevronRight, size = 16.dp)
+            AppIcons.MyIcon(
+                AppIcons.ChevronRight,
+                size = 16.dp,
+                tint = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
@@ -146,12 +160,16 @@ fun CategoryTabRow(selectedTab: Int, onTabSelected: (Int) -> Unit) {
         Tab(
             selected = selectedTab == 0,
             onClick = { onTabSelected(0) },
-            text = { Text(stringResource(R.string.expense), fontWeight = FontWeight.Bold) }
+            text = { Text(stringResource(R.string.expense), fontWeight = FontWeight.Bold) },
+            selectedContentColor = MaterialTheme.colorScheme.primary,
+            unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Tab(
             selected = selectedTab == 1,
             onClick = { onTabSelected(1) },
-            text = { Text(stringResource(R.string.income), fontWeight = FontWeight.Bold) }
+            text = { Text(stringResource(R.string.income), fontWeight = FontWeight.Bold) },
+            selectedContentColor = MaterialTheme.colorScheme.primary,
+            unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -195,7 +213,7 @@ fun CategoryGrid(
                 Card(
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.onSecondary
+                        containerColor = MaterialTheme.colorScheme.surface
                     ),
                     modifier = Modifier
                         .aspectRatio(1f)
@@ -233,7 +251,7 @@ fun CategoryCard(
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = cardColor ?: MaterialTheme.colorScheme.onPrimary
+            containerColor = cardColor ?: MaterialTheme.colorScheme.surface
         ),
         modifier = Modifier
             .aspectRatio(1f)
@@ -259,6 +277,7 @@ fun CategoryCard(
                 text = name,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center

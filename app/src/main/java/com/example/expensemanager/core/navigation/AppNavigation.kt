@@ -35,27 +35,28 @@ import com.example.expensemanager.feature.history.HistoryScreen
 import com.example.expensemanager.feature.home.HomeScreen
 import com.example.expensemanager.feature.report.ReportScreen
 import com.example.expensemanager.feature.setting.SettingScreen
-import com.google.firebase.auth.FirebaseAuth
+import io.github.jan.supabase.auth.Auth
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppNavigation(
     navController: NavHostController,
     connectivityObserver: NetworkConnectivityObserver,
-    auth: FirebaseAuth,
+    auth: Auth,
     currentTheme: String,
     onThemeChange: (String) -> Unit,
     isCurrencySet: Boolean
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    val scope = rememberCoroutineScope()
 
     val networkStatus by connectivityObserver.observe().collectAsState(
         initial = ConnectivityObserver.Status.Available
     )
     val isOnline = networkStatus == ConnectivityObserver.Status.Available
-
-    val startDestination = remember(auth.currentUser, isCurrencySet) {
-        if (auth.currentUser != null) {
+    val startDestination = remember(isCurrencySet) {
+        if (auth.currentUserOrNull() != null) {
             if (isCurrencySet) AppDestination.Home.route
             else "currency_selection?isFromSetting=false"
         } else {
@@ -156,9 +157,12 @@ fun AppNavigation(
                     RegisterScreen(
                         isOnline = isOnline,
                         onRegisterSuccess = {
-                            auth.signOut()
-                            navController.navigate("login") {
-                                popUpTo("register") { inclusive = true }
+                            //Run signOut of coroutine scope
+                            scope.launch {
+                                auth.signOut()
+                                navController.navigate("login") {
+                                    popUpTo("register") { inclusive = true }
+                                }
                             }
                         },
                         onGoToLogin = { navController.popBackStack() }
@@ -233,13 +237,15 @@ fun AppNavigation(
                         currentTheme = currentTheme,
                         onThemeChange = onThemeChange,
                         onNavigateToCurrencySelection = {
-                            // Khi đi từ Setting, truyền isFromSetting = true
                             navController.navigate("currency_selection?isFromSetting=true")
                         },
                         onLogout = {
-                            auth.signOut()
-                            navController.navigate("login") {
-                                popUpTo(0) { inclusive = true }
+                            // SỬA: Chạy signOut trong coroutine scope
+                            scope.launch {
+                                auth.signOut()
+                                navController.navigate("login") {
+                                    popUpTo(0) { inclusive = true }
+                                }
                             }
                         }
                     )

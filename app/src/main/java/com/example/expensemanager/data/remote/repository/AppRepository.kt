@@ -7,27 +7,45 @@ import kotlinx.coroutines.flow.Flow
 
 interface AppRepository {
 
-    // --- Transaction (Giao dịch) ---
-    fun getTransactionsByMonth(month: Int, year: Int): Flow<List<TransactionEntity>>
-    fun getTotalExpenseByMonth(month: Int, year: Int): Flow<Double>
-    fun getTotalIncomeByMonth(month: Int, year: Int): Flow<Double>
-    fun getTransactionById(id: Int): Flow<TransactionEntity?>
-    fun getAllLocalTransactions(): Flow<List<TransactionEntity>>
-    fun getTransactions(): Flow<Result<List<TransactionResponse>>>
+    fun getTransactionsByMonth(month: Int, year: Int, userId: String): Flow<List<TransactionEntity>>
+    fun getTotalExpenseByMonth(month: Int, year: Int, userId: String): Flow<Double>
+    fun getTotalIncomeByMonth(month: Int, year: Int, userId: String): Flow<Double>
+    fun getTransactionById(id: String, userId: String): Flow<TransactionEntity?>
+    fun getAllLocalTransactions(userId: String): Flow<List<TransactionEntity>>
 
     suspend fun insertTransaction(transaction: TransactionEntity)
     suspend fun updateLocalTransaction(transaction: TransactionEntity)
-    suspend fun deleteTransactionById(id: Int)
+
+    suspend fun deleteTransactionById(id: String, userId: String)
+    suspend fun deleteTransactionsByCategory(categoryName: String, userId: String)
+    suspend fun deleteTransactionsByCategoryAndMonth(categoryName: String, month: Int, year: Int, userId: String)
+    suspend fun updateTransactionCategoryName(oldName: String, newName: String, userId: String)
+    suspend fun updateTransactionIconByCategory(categoryName: String, newIcon: String, userId: String)
+
     suspend fun deleteAllTransactions()
 
-    suspend fun deleteTransactionsByCategory(categoryName: String)
+    fun getAllCategories(userId: String): Flow<List<CategoryEntity>>
+    fun getCategoriesByTime(month: Int, year: Int, userId: String): Flow<List<CategoryEntity>>
 
-    suspend fun deleteTransactionsByCategoryAndMonth(categoryName: String, month: Int, year: Int)
+    suspend fun addCategory(
+        name: String, iconName: String, isExpense: Boolean, month: Int? = null,
+        year: Int? = null, userId: String
+    )
+    suspend fun deleteCategory(name: String, userId: String)
+    fun getBudgets(month: Int, year: Int, userId: String): Flow<List<BudgetEntity>>
+    suspend fun upsertBudget(category: String, amount: Double, month: Int, year: Int, userId: String)
+    suspend fun deleteBudget(category: String, month: Int, year: Int, userId: String)
+    suspend fun deleteOnlyBudget(category: String, month: Int, year: Int, userId: String)
+    suspend fun updateBudgetCategoryName(oldName: String, newName: String, userId: String)
+    suspend fun deleteAllBudgets()
 
-    suspend fun updateTransactionCategoryName(oldName: String, newName: String)
+    suspend fun clearAllLocalData()
+    fun getUserProfile(): Flow<Result<UserResponse>>
+    fun getCurrentUserId(): String?
 
-    suspend fun updateTransactionIconByCategory(categoryName: String, newIcon: String)
+    suspend fun syncCloudData(): Result<Unit>
 
+    fun getTransactions(): Flow<Result<List<TransactionResponse>>>
     fun addTransaction(
         description: String,
         amount: Double,
@@ -36,23 +54,4 @@ interface AppRepository {
         categoryIcon: String,
         type: String
     ): Flow<Result<TransactionResponse>>
-
-    //Category
-    fun getAllCategories(): Flow<List<CategoryEntity>>
-    suspend fun addCategory(name: String, iconName: String, isExpense: Boolean)
-    suspend fun deleteCategory(name: String)
-
-    //Budget
-    fun getBudgets(month: Int, year: Int): Flow<List<BudgetEntity>>
-    suspend fun upsertBudget(category: String, amount: Double, month: Int, year: Int)
-    suspend fun deleteBudget(category: String, month: Int, year: Int)
-
-    suspend fun deleteOnlyBudget(category: String, month: Int, year: Int)
-    suspend fun deleteAllBudgets()
-
-    suspend fun updateBudgetCategoryName(oldName: String, newName: String)
-
-    //Global & User
-    suspend fun clearAllLocalData()
-    fun getUserProfile(): Flow<Result<UserResponse>>
 }

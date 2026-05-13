@@ -1,6 +1,8 @@
 package com.example.expensemanager.feature.budget
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -15,6 +17,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.expensemanager.R
+import com.example.expensemanager.utils.format.CurrencyVisualTransformation
+import com.example.expensemanager.utils.format.formatCurrencyForInput
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,7 +36,9 @@ fun BudgetActionDialog(
         mutableStateOf(if (initialCategory.isEmpty() && categories.isNotEmpty()) categories[0] else initialCategory)
     }
 
-    var amt by remember { mutableStateOf(initialAmount) }
+    var amt by remember {
+        mutableStateOf(initialAmount.toDoubleOrNull()?.toLong()?.toString() ?: "")
+    }
 
     var expanded by remember { mutableStateOf(false) }
 
@@ -40,7 +46,7 @@ fun BudgetActionDialog(
         Surface(
             shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 6.dp
+            tonalElevation = 0.dp
         ) {
             Column(
                 Modifier
@@ -114,23 +120,49 @@ fun BudgetActionDialog(
                 OutlinedTextField(
                     value = amt,
                     onValueChange = { input ->
-                        if (input.all { it.isDigit() || it == '.' } && input.count { it == '.' } <= 1) {
-                            amt = input
-                        }
+                        amt = input.filter { it.isDigit() }.take(12)
                     },
                     label = { Text(stringResource(R.string.enter_amount)) },
                     suffix = {
                         Text(
                             text = currencyCode,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    singleLine = true
+                    singleLine = true,
+                    visualTransformation = CurrencyVisualTransformation(currencyCode)
                 )
+
+                if (amt.isNotEmpty() && amt.length <= 8) {
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val suffixes = when (currencyCode.uppercase()) {
+                            "VND", "₫" -> listOf("000", "0000", "00000", "000000")
+                            "JPY", "¥", "KRW", "₩" -> listOf("00", "000", "0000")
+                            else -> listOf("00", "000")
+                        }
+
+                        items(suffixes) { zeros ->
+                            val suggestedValue = amt + zeros
+                            if (suggestedValue.length <= 12) {
+                                AssistChip(
+                                    onClick = { amt = suggestedValue },
+                                    label = {
+                                        Text(formatCurrencyForInput(suggestedValue, currencyCode))
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
 
                 Spacer(Modifier.height(24.dp))
 
@@ -151,7 +183,7 @@ fun BudgetActionDialog(
                             onConfirm(selectedCat, finalAmount)
                         },
                         shape = RoundedCornerShape(12.dp),
-                        enabled = amt.isNotEmpty() && amt != "."
+                        enabled = amt.isNotEmpty()
                     ) {
                         Text(
                             text = stringResource(R.string.Save),

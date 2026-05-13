@@ -45,7 +45,7 @@ fun CategoryFormDialogUI(
     }
 
     Dialog(onDismissRequest = onDismiss) {
-        Surface(shape = RoundedCornerShape(28.dp), color = Color.White) {
+        Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surface) {
             Column(
                 Modifier
                     .padding(24.dp)
@@ -62,7 +62,7 @@ fun CategoryFormDialogUI(
                     Modifier
                         .fillMaxWidth()
                         .height(44.dp)
-                        .background(Color(0xFFF5F5F5), RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
                         .padding(4.dp)
                 ) {
                     val mod = Modifier
@@ -106,16 +106,16 @@ fun CategoryFormDialogUI(
                     onClick = { showIconPicker = true },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, Color.LightGray)
+                    border = BorderStroke(1.dp, Color.Gray)
                 ) {
                     Row(
                         Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        Text("Icon", color = Color.DarkGray)
+                        Text("Icon", color = Color.Gray)
                         AppIcons.MyIcon(
                             AppIcons.getIconIdByName(selectedIcon),
                             size = 24.dp,

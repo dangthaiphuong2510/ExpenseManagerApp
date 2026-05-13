@@ -65,10 +65,13 @@ class BudgetViewModel @Inject constructor(
     ) { month, year, symbol ->
         Triple(month, year, symbol)
     }.flatMapLatest { (month, year, symbol) ->
+
+        val userId = repository.getCurrentUserId() ?: ""
+
         combine(
-            repository.getTransactionsByMonth(month, year),
-            repository.getBudgets(month, year),
-            repository.getAllCategories()
+            repository.getTransactionsByMonth(month, year, userId),
+            repository.getBudgets(month, year, userId),
+            repository.getAllCategories(userId)
         ) { transactions, budgets, categories ->
             val budgetMap = budgets.associate { it.category to it.amount }
 
@@ -126,7 +129,8 @@ class BudgetViewModel @Inject constructor(
 
     fun updateBudget(category: String, amount: Double) {
         viewModelScope.launch {
-            repository.upsertBudget(category, amount, _selectedMonth.value, _selectedYear.value)
+            val userId = repository.getCurrentUserId() ?: ""
+            repository.upsertBudget(category, amount, _selectedMonth.value, _selectedYear.value, userId)
         }
     }
 }

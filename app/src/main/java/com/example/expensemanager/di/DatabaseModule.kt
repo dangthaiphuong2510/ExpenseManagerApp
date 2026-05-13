@@ -8,7 +8,7 @@ import com.example.expensemanager.data.local.dao.CategoryDao
 import com.example.expensemanager.data.local.dao.TransactionDao
 import com.example.expensemanager.data.remote.api.ApiService
 import com.example.expensemanager.data.remote.repository.AppRepository
-import com.example.expensemanager.data.remote.repository.AppRepositoryImpl
+import com.example.expensemanager.data.remote.repository.impl.AppRepositoryImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

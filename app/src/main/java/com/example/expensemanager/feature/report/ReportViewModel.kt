@@ -34,10 +34,11 @@ class ReportViewModel @Inject constructor(
     ) { month, symbol ->
         month to symbol
     }.flatMapLatest { (selectedMonth, symbol) ->
+        val userId = repository.getCurrentUserId() ?: ""
         val last6Months = (5 downTo 0).map { selectedMonth.minusMonths(it.toLong()) }
 
         val flows = last6Months.map { month ->
-            repository.getTransactionsByMonth(month.monthValue, month.year)
+            repository.getTransactionsByMonth(month = month.monthValue, year = month.year, userId = userId)
                 .map { transactions ->
                     month to transactions.filter {
                         it.type == "EXPENSE" && it.description != "Budget Overwrite"

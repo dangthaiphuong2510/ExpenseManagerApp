@@ -41,7 +41,10 @@ class HistoryViewModel @Inject constructor(
     ) { month, year, query, code ->
         DataParams(month, year, query, code)
     }.flatMapLatest { params ->
-        repository.getTransactionsByMonth(params.month, params.year)
+
+        val userId = repository.getCurrentUserId() ?: ""
+
+        repository.getTransactionsByMonth(params.month, params.year, userId)
             .map { transactions ->
                 val filteredTransactions = if (params.query.isEmpty()) {
                     transactions
@@ -101,9 +104,10 @@ class HistoryViewModel @Inject constructor(
         _searchQuery.value = query
     }
 
-    fun deleteTransaction(id: Int) {
+    fun deleteTransaction(id: String) {
         viewModelScope.launch {
-            repository.deleteTransactionById(id)
+            val userId = repository.getCurrentUserId() ?: ""
+            repository.deleteTransactionById(id, userId)
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.example.expensemanager.feature.authentication.register
 
+import android.widget.Toast
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -7,12 +8,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.expensemanager.data.model.AuthState
 import com.example.expensemanager.feature.authentication.AuthViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun RegisterScreen(
@@ -30,6 +31,8 @@ fun RegisterScreen(
 ) {
     val state by viewModel.authState.collectAsState()
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -37,12 +40,17 @@ fun RegisterScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var errorText by remember { mutableStateOf<String?>(null) }
 
+    //Least: 8 characters, 1 letter, 1 number
     val passwordPattern = "^(?=.*[A-Za-z])(?=.*\\d).{8,}$".toRegex()
 
     LaunchedEffect(state) {
         if (state is AuthState.Success) {
-            onRegisterSuccess()
-            viewModel.resetState()
+            scope.launch {
+                viewModel.logout()
+                Toast.makeText(context, "Sign up successfully!", Toast.LENGTH_SHORT).show()
+                onRegisterSuccess()
+                viewModel.resetState()
+            }
         } else if (state is AuthState.Error) {
             errorText = (state as AuthState.Error).message
         }
@@ -96,22 +104,41 @@ fun RegisterScreen(
                     val isNameValid = fullName.isNotBlank()
 
                     when {
-                        !isNameValid || email.isBlank() || password.isBlank() -> { errorText = "Please fill in all fields" }
-                        !isEmailValid -> { errorText = "Invalid email format" }
-                        !isPassPatternValid -> { errorText = "Password must be at least 8 characters with letters & numbers" }
-                        !isMatch -> { errorText = "Passwords do not match" }
+                        !isNameValid || email.isBlank() || password.isBlank() -> {
+                            errorText = "Please fill in all fields"
+                        }
+
+                        !isEmailValid -> {
+                            errorText = "Invalid email format"
+                        }
+
+                        !isPassPatternValid -> {
+                            errorText =
+                                "Password must be at least 8 characters with letters and numbers"
+                        }
+
+                        !isMatch -> {
+                            errorText = "Confirmation password does not match"
+                        }
+
                         else -> {
                             errorText = null
                             viewModel.register(email, password, confirmPassword, fullName)
                         }
                     }
                 },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 enabled = isOnline && state !is AuthState.Loading
             ) {
                 if (state is AuthState.Loading) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
                 } else {
                     Text("SIGN UP", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 }

@@ -17,6 +17,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.expensemanager.R
 import java.time.Instant
 import java.time.ZoneId
+import java.util.Calendar
+import java.util.TimeZone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,13 +26,11 @@ fun BudgetScreen(
     viewModel: BudgetViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val currencyCode = uiState.currencyCode // Lấy mã tiền tệ (VND/USD)
+    val currencyCode = uiState.currencyCode
 
     var showDialog by remember { mutableStateOf(false) }
     var selectedCategoryToEdit by remember { mutableStateOf<BudgetItem?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
-
-    val datePickerState = rememberDatePickerState()
 
     val chartColors = listOf(
         MaterialTheme.colorScheme.primary,
@@ -104,7 +104,7 @@ fun BudgetScreen(
     if (showDialog || selectedCategoryToEdit != null) {
         BudgetActionDialog(
             title = if (selectedCategoryToEdit != null)
-                stringResource(R.string.edit_category)
+                stringResource(R.string.edit_total_budget)
             else
                 stringResource(R.string.set_budget),
             categories = uiState.allCategories,
@@ -127,13 +127,30 @@ fun BudgetScreen(
     }
 
     if (showDatePicker) {
+        val initialMillis = remember(uiState.selectedMonth, uiState.selectedYear) {
+            val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+            cal.set(Calendar.YEAR, uiState.selectedYear)
+            cal.set(Calendar.MONTH, uiState.selectedMonth - 1)
+            cal.set(Calendar.DAY_OF_MONTH, 1)
+            cal.set(Calendar.HOUR_OF_DAY, 0)
+            cal.set(Calendar.MINUTE, 0)
+            cal.set(Calendar.SECOND, 0)
+            cal.set(Calendar.MILLISECOND, 0)
+            cal.timeInMillis
+        }
+
+        val localDatePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = initialMillis,
+            initialDisplayedMonthMillis = initialMillis
+        )
+
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let { millis ->
+                    localDatePickerState.selectedDateMillis?.let { millis ->
                         val date = Instant.ofEpochMilli(millis)
-                            .atZone(ZoneId.systemDefault())
+                            .atZone(ZoneId.of("UTC"))
                             .toLocalDate()
                         viewModel.setMonthYear(date.monthValue, date.year)
                     }
@@ -148,7 +165,7 @@ fun BudgetScreen(
                 }
             }
         ) {
-            DatePicker(state = datePickerState)
+            DatePicker(state = localDatePickerState)
         }
     }
 }

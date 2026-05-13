@@ -40,7 +40,7 @@ fun CategoryManageDialogUI(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Manage Categories", fontWeight = FontWeight.Bold) },
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.surface,
         text = {
             Column(Modifier.fillMaxWidth()) {
                 OutlinedCard(
@@ -48,7 +48,7 @@ fun CategoryManageDialogUI(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     border = BorderStroke(1.dp, Color.LightGray),
-                    colors = CardDefaults.outlinedCardColors(containerColor = Color(0xFFF9F9F9))
+                    colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Row(
                         modifier = Modifier
