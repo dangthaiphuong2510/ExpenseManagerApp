@@ -109,7 +109,8 @@ fun ReportScreen(viewModel: ReportViewModel = hiltViewModel()) {
                         val color = chartColors[index % chartColors.size]
                         val name = pair.first
                         val amount = pair.second
-                        val percentage = if (uiState.totalAmount > 0) (amount / uiState.totalAmount * 100).toInt() else 0
+                        val percentage =
+                            if (uiState.totalAmount > 0) (amount / uiState.totalAmount * 100).toInt() else 0
 
                         Card(
                             modifier = Modifier
@@ -141,12 +142,19 @@ fun ReportScreen(viewModel: ReportViewModel = hiltViewModel()) {
                                 Spacer(Modifier.width(12.dp))
 
                                 Column(Modifier.weight(1f)) {
-                                    Text(text = name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                    Text(text = "$percentage%", fontSize = 12.sp, color = Color.Gray)
+                                    Text(
+                                        text = name,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp
+                                    )
+                                    Text(
+                                        text = "$percentage%",
+                                        fontSize = 12.sp,
+                                        color = Color.Gray
+                                    )
                                 }
 
                                 Text(
-                                    // SỬA: Truyền currencyCode để hiện ₫ hoặc $
                                     text = amount.formatWithLocalCurrency(currencyCode),
                                     fontWeight = FontWeight.ExtraBold,
                                     color = MaterialTheme.colorScheme.onSurface

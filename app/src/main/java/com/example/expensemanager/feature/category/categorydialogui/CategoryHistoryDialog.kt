@@ -31,7 +31,7 @@ fun CategoryHistoryDialogUI(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.surface,
         title = { Text("History: $categoryName", fontWeight = FontWeight.Bold) },
         text = {
             Column(

@@ -7,17 +7,15 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.expensemanager.utils.format.formatWithLocalCurrency
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.expensemanager.R
+import com.example.expensemanager.feature.authentication.AuthViewModel
 import com.example.expensemanager.feature.home.components.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -30,11 +28,15 @@ fun HomeScreen(
     onNavigateToReport: () -> Unit,
     onNavigateToSetting: () -> Unit,
     onNavigateToAddTransaction: () -> Unit,
+
     isOnline: Boolean,
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: HomeViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.homeState.collectAsStateWithLifecycle()
     val lazyListState = rememberLazyListState()
+
+    val userName = authViewModel.getCurrentUserName()
 
     var showQuickAddSheet by remember { mutableStateOf(false) }
     val quickAddSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -75,10 +77,12 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             HomeHeader(
-                notificationCount = uiState.notificationCount,
+                userName = userName,
+                // Lấy số lượng thông báo chưa đọc (chấm đỏ)
+                notificationCount = uiState.unreadCount,
                 onNotificationClick = {
                     showNotificationSheet = true
-                    viewModel.markNotificationsAsRead()
+                    // KHÔNG gọi hàm markAsRead ở đây nữa, để người dùng mở lên vẫn thấy chấm đỏ
                 }
             )
 
@@ -123,7 +127,7 @@ fun HomeScreen(
         }
     }
 
-    //QUICK ADD BOTTOM SHEET
+    // QUICK ADD BOTTOM SHEET
     if (showQuickAddSheet) {
         ModalBottomSheet(
             onDismissRequest = { showQuickAddSheet = false },
@@ -151,13 +155,20 @@ fun HomeScreen(
         }
     }
 
+    // NOTIFICATION BOTTOM SHEET
     if (showNotificationSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showNotificationSheet = false },
-            sheetState = notificationSheetState
-        ) {
-            NotificationBottomSheetContent(uiState = uiState)
-        }
+        // Gọi thẳng Component xịn xò mà chúng ta vừa viết ở file NotificationBottomSheet.kt
+        NotificationBottomSheet(
+            sheetState = notificationSheetState,
+            uiState = uiState,
+            onDismiss = { showNotificationSheet = false },
+            onNotificationClick = { msg ->
+                viewModel.markNotificationAsRead(msg)
+            },
+            onMarkAllAsRead = {
+                viewModel.markAllNotificationsAsRead()
+            }
+        )
     }
 }
 
@@ -201,51 +212,5 @@ fun EmptyTransactionsPlaceholder() {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-    }
-}
-
-@Composable
-fun NotificationBottomSheetContent(uiState: HomeUiState) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .navigationBarsPadding()
-    ) {
-        Text(
-            text = stringResource(id = R.string.notifications),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        if (uiState.budgetWarnings.isEmpty()) {
-            Text(
-                text = "No notification available",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier
-                    .padding(vertical = 24.dp)
-                    .align(Alignment.CenterHorizontally)
-            )
-        } else {
-            uiState.budgetWarnings.forEach { warning ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-                    )
-                ) {
-                    Text(
-                        text = warning,
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(24.dp))
     }
 }

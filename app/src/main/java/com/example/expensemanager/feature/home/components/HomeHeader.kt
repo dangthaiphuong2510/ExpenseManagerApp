@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -16,16 +15,15 @@ import androidx.compose.ui.unit.dp
 import com.example.expensemanager.R
 import com.example.expensemanager.designsystem.theme.AppIcons
 import com.example.expensemanager.designsystem.theme.ExpenseRed
-import com.google.firebase.auth.FirebaseAuth
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeHeader(
+    userName: String,
     notificationCount: Int,
     onNotificationClick: () -> Unit
 ) {
-    val currentUser = remember { FirebaseAuth.getInstance().currentUser }
-    val displayName = currentUser?.displayName ?: stringResource(id = R.string.user_name)
+    val welcomeText = stringResource(id = R.string.home_welcome_back)
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -34,12 +32,12 @@ fun HomeHeader(
     ) {
         Column {
             Text(
-                text = stringResource(id = R.string.home_welcome_back),
+                text = welcomeText,
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = displayName,
+                text = userName,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )

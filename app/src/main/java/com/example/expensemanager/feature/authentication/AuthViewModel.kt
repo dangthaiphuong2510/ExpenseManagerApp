@@ -3,20 +3,32 @@ package com.example.expensemanager.feature.authentication
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.expensemanager.data.model.AuthState
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.userProfileChangeRequest
+import com.example.expensemanager.data.remote.repository.AppRepository
+import com.example.expensemanager.data.remote.repository.impl.SyncRepoImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.Auth
+import io.github.jan.supabase.auth.OtpType
+import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.auth.providers.builtin.IDToken
+import io.github.jan.supabase.auth.user.UserInfo
+import io.github.jan.supabase.compose.auth.composeAuth
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import javax.inject.Inject
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val auth: FirebaseAuth
+    private val auth: Auth,
+    private val repository: AppRepository,
+    private val syncRepo: SyncRepoImpl,
+    private val supabaseClient: SupabaseClient
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
@@ -26,7 +38,13 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
-                auth.signInWithEmailAndPassword(email, pass).await()
+                auth.signInWith(Email) {
+                    this.email = email
+                    this.password = pass
+                }
+
+                syncRepo.syncCloudData()
+
                 _authState.value = AuthState.Success
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(
@@ -40,34 +58,100 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
-                // Create user
-                val result = auth.createUserWithEmailAndPassword(email, pass).await()
-
-                val profileUpdates = userProfileChangeRequest {
-                    displayName = fullName
+                auth.signUpWith(Email) {
+                    this.email = email
+                    this.password = pass
+                    data = buildJsonObject {
+                        put("full_name", fullName)
+                    }
                 }
-                result.user?.updateProfile(profileUpdates)?.await()
 
                 _authState.value = AuthState.Success
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(
-                    e.localizedMessage ?: "Registration failed. Try a different email."
+                    e.localizedMessage ?: "Registration failed. Email might already exist."
                 )
             }
         }
     }
 
-    fun signInWithGoogle(idToken: String) {
+    fun signInWithGoogle(token: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
-                val credential = GoogleAuthProvider.getCredential(idToken, null)
-                auth.signInWithCredential(credential).await()
+                auth.signInWith(IDToken) {
+                    idToken = token
+                }
+
+                syncRepo.syncCloudData()
+
+                _authState.value = AuthState.Success
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.localizedMessage ?: "Google Login Failed")
+            }
+        }
+    }
+
+    fun syncDataAfterGoogleLogin() {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            try {
+                syncRepo.syncCloudData()
                 _authState.value = AuthState.Success
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(
-                    e.localizedMessage ?: "Google Authentication failed"
+                    e.localizedMessage ?: "Error syncing data after Google login"
                 )
+            }
+        }
+    }
+
+    fun sendResetPasswordOtp(email: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        if (email.isBlank()) {
+            onError("Please enter your email")
+            return
+        }
+        viewModelScope.launch {
+            try {
+                auth.resetPasswordForEmail(email)
+                onSuccess()
+            } catch (e: Exception) {
+                onError(e.localizedMessage ?: "Unable to send the encrypted OTP. Please check your email again.")
+            }
+        }
+    }
+
+    fun verifyOtpAndResetPassword(
+        email: String,
+        otp: String,
+        newPass: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        if (otp.length != 6) {
+            onError("The OTP code must consist of exactly 6 digits.")
+            return
+        }
+        if (newPass.length < 6) {
+            onError("Password new must be at least 6 characters")
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                auth.verifyEmailOtp(
+                    type = OtpType.Email.RECOVERY,
+                    email = email,
+                    token = otp
+                )
+
+                auth.updateUser {
+                    password = newPass
+                }
+
+                onSuccess()
+            } catch (e: Exception) {
+                onError(e.localizedMessage ?: "OTP invalid or expired")
             }
         }
     }
@@ -76,15 +160,31 @@ class AuthViewModel @Inject constructor(
         _authState.value = AuthState.Idle
     }
 
-    fun isUserLoggedIn(): Boolean = auth.currentUser != null
+    private fun getCurrentUser(): UserInfo? = auth.currentUserOrNull()
 
-    fun getCurrentUserName(): String = auth.currentUser?.displayName ?: "User"
+    fun isUserLoggedIn(): Boolean = getCurrentUser() != null
 
-    fun getCurrentUserEmail(): String = auth.currentUser?.email ?: ""
+    fun getCurrentUserName(): String {
+        return getCurrentUser()?.userMetadata?.get("full_name")?.toString()?.replace("\"", "")
+            ?: "User"
+    }
 
+    fun getCurrentUserEmail(): String = getCurrentUser()?.email ?: ""
 
     fun logout() {
-        auth.signOut()
-        _authState.value = AuthState.Idle
+        viewModelScope.launch {
+            try {
+                withContext(NonCancellable) {
+                    repository.clearAllLocalData()
+                    auth.signOut()
+                }
+
+                _authState.value = AuthState.Idle
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.localizedMessage ?: "Logout failed")
+            }
+        }
     }
+
+    fun getComposeAuth() = supabaseClient.composeAuth
 }

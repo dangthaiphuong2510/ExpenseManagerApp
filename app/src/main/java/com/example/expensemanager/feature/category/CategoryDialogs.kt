@@ -12,6 +12,8 @@ import com.example.expensemanager.feature.category.categorydialogui.CategoryTran
 import java.time.Instant
 import java.time.YearMonth
 import java.time.ZoneId
+import java.util.Calendar
+import java.util.TimeZone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,6 +24,8 @@ fun CategoryDialogContainer(
     showTransaction: Boolean,
     showDatePicker: Boolean,
     currencyCode: String,
+    selectedMonth: Int,
+    selectedYear: Int,
 
     // data
     categoryToEdit: CategoryItem?,
@@ -46,7 +50,7 @@ fun CategoryDialogContainer(
     onConfirmTransaction: (Double, String, Long) -> Unit,
     onAddNewTransaction: () -> Unit,
     onEditTransaction: (TransactionItem) -> Unit,
-    onDeleteTransaction: (Int) -> Unit,
+    onDeleteTransaction: (String) -> Unit,
     onAddNewCategoryFromManage: () -> Unit,
     onDateSelected: (YearMonth) -> Unit
 ) {
@@ -69,6 +73,10 @@ fun CategoryDialogContainer(
             categoryName = selectedCategoryName,
             currencyCode = currencyCode,
             isExpense = selectedTab == 0,
+
+            selectedMonth = selectedMonth,
+            selectedYear = selectedYear,
+
             onDismiss = onDismiss,
             onConfirm = onConfirmTransaction,
             noteError = noteError,
@@ -117,15 +125,31 @@ fun CategoryDialogContainer(
         )
     }
 
-    //Date Picker
     if (showDatePicker) {
+        val initialMillis = remember(selectedMonth, selectedYear) {
+            val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+            cal.set(Calendar.YEAR, selectedYear)
+            cal.set(Calendar.MONTH, selectedMonth - 1)
+            cal.set(Calendar.DAY_OF_MONTH, 1)
+            cal.set(Calendar.HOUR_OF_DAY, 0)
+            cal.set(Calendar.MINUTE, 0)
+            cal.set(Calendar.SECOND, 0)
+            cal.set(Calendar.MILLISECOND, 0)
+            cal.timeInMillis
+        }
+
+        val localDatePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = initialMillis,
+            initialDisplayedMonthMillis = initialMillis
+        )
+
         DatePickerDialog(
             onDismissRequest = onDismiss,
             confirmButton = {
                 TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let {
+                    localDatePickerState.selectedDateMillis?.let {
                         val date = Instant.ofEpochMilli(it)
-                            .atZone(ZoneId.systemDefault())
+                            .atZone(ZoneId.of("UTC"))
                             .toLocalDate()
                         onDateSelected(YearMonth.of(date.year, date.monthValue))
                     }
@@ -140,7 +164,7 @@ fun CategoryDialogContainer(
                 }
             }
         ) {
-            DatePicker(state = datePickerState)
+            DatePicker(state = localDatePickerState)
         }
     }
 }

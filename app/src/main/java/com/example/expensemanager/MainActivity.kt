@@ -1,6 +1,7 @@
 package com.example.expensemanager
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -12,36 +13,55 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.example.expensemanager.core.navigation.AppNavigation
 import com.example.expensemanager.core.network.NetworkConnectivityObserver
 import com.example.expensemanager.data.local.datastore.CurrencyManager
+import com.example.expensemanager.data.remote.repository.impl.SyncRepoImpl // Import cái này
 import com.example.expensemanager.designsystem.theme.AppTheme
 import com.example.expensemanager.utils.format.LocalCurrencySymbol
-import com.google.firebase.auth.FirebaseAuth
+import io.github.jan.supabase.auth.Auth
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    @Inject lateinit var networkConnectivityObserver: NetworkConnectivityObserver
-    @Inject lateinit var auth: FirebaseAuth
-    @Inject lateinit var currencyManager: CurrencyManager
+    @Inject
+    lateinit var networkConnectivityObserver: NetworkConnectivityObserver
+
+    @Inject
+    lateinit var auth: Auth
+
+    @Inject
+    lateinit var currencyManager: CurrencyManager
+
+    @Inject
+    lateinit var syncRepo: SyncRepoImpl
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen() // Cài đặt splash screen trước super.onCreate
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         actionBar?.hide()
 
         enableEdgeToEdge()
 
-        setContent {
-            // Lấy trạng thái từ DataStore
-            val isCurrencySet by currencyManager.isCurrencySet.collectAsStateWithLifecycle(initialValue = false)
-            val currencySymbol by currencyManager.currencySymbol.collectAsStateWithLifecycle(initialValue = "₫")
+        lifecycleScope.launch {
+            Log.d("MAIN_SYNC", "Starting sync...")
+            syncRepo.syncCloudData()
+        }
 
-            // Xử lý Theme
+        setContent {
+            val isCurrencySet by currencyManager.isCurrencySet.collectAsStateWithLifecycle(
+                initialValue = false
+            )
+            val currencySymbol by currencyManager.currencySymbol.collectAsStateWithLifecycle(
+                initialValue = "₫"
+            )
+
+            // Theme state
             var themeState by rememberSaveable { mutableStateOf("System") }
             val isDarkTheme = when (themeState) {
                 "Dark" -> true
@@ -51,16 +71,20 @@ class MainActivity : ComponentActivity() {
 
             val navController = rememberNavController()
 
-            // Cung cấp Symbol tiền tệ cho toàn bộ App
             CompositionLocalProvider(LocalCurrencySymbol provides currencySymbol) {
                 AppTheme(darkTheme = isDarkTheme) {
                     val backgroundColor = MaterialTheme.colorScheme.background.toArgb()
 
-                    // Cập nhật thanh trạng thái hệ thống theo màu nền của Theme
                     LaunchedEffect(isDarkTheme, backgroundColor) {
                         enableEdgeToEdge(
-                            statusBarStyle = SystemBarStyle.auto(backgroundColor, backgroundColor) { isDarkTheme },
-                            navigationBarStyle = SystemBarStyle.auto(backgroundColor, backgroundColor) { isDarkTheme }
+                            statusBarStyle = SystemBarStyle.auto(
+                                backgroundColor,
+                                backgroundColor
+                            ) { isDarkTheme },
+                            navigationBarStyle = SystemBarStyle.auto(
+                                backgroundColor,
+                                backgroundColor
+                            ) { isDarkTheme }
                         )
                     }
 

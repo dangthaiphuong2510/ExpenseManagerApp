@@ -1,14 +1,17 @@
 package com.example.expensemanager.feature.home.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -23,13 +26,15 @@ import com.example.expensemanager.feature.home.HomeUiState
 fun NotificationBottomSheet(
     sheetState: SheetState,
     uiState: HomeUiState,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onNotificationClick: (String) -> Unit,
+    onMarkAllAsRead: () -> Unit
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 8.dp
+        tonalElevation = 0.dp
     ) {
         Column(
             modifier = Modifier
@@ -37,19 +42,32 @@ fun NotificationBottomSheet(
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 48.dp)
         ) {
-            Text(
-                text = stringResource(R.string.notifications),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.notifications),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            val hasToday = uiState.recentTransactions.any {
-                android.text.format.DateUtils.isToday(it.date)
+                if (uiState.unreadCount > 0) {
+                    TextButton(onClick = onMarkAllAsRead) {
+                        Text(
+                            text = "Mark all as read",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
             }
 
-            if (uiState.budgetWarnings.isEmpty() && hasToday) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (uiState.notifications.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -67,29 +85,23 @@ fun NotificationBottomSheet(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(uiState.budgetWarnings) { warning ->
-                        NotificationRow(
-                            title = "Spending warning!",
-                            message = warning,
-                            icon = AppIcons.Info,
-                            color = ExpenseRed
-                        )
-                        HorizontalDivider(
-                            modifier = Modifier.padding(vertical = 4.dp),
-                            thickness = 0.5.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant
-                        )
-                    }
 
-                    if (!hasToday) {
-                        item {
-                            NotificationRow(
-                                title = "Daily remembers",
-                                message = "Today you didn't enter any transactions",
-                                icon = AppIcons.Edit,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
+                    items(uiState.notifications) { notif ->
+                        val isWarning =
+                            notif.message.contains("Warning") || notif.message.contains("exceeding")
+                        val iconRes = if (isWarning) AppIcons.Info else AppIcons.Edit
+                        val iconColor =
+                            if (isWarning) ExpenseRed else MaterialTheme.colorScheme.primary
+                        val title = if (isWarning) "Spending Warning" else "Daily Reminder"
+
+                        NotificationRow(
+                            title = title,
+                            message = notif.message,
+                            icon = iconRes,
+                            iconColor = iconColor,
+                            isRead = notif.isRead,
+                            onClick = { onNotificationClick(notif.message) }
+                        )
                     }
                 }
             }
@@ -98,32 +110,69 @@ fun NotificationBottomSheet(
 }
 
 @Composable
-fun NotificationRow(title: String, message: String, icon: Int, color: Color) {
+fun NotificationRow(
+    title: String,
+    message: String,
+    icon: Int,
+    iconColor: Color,
+    isRead: Boolean,
+    onClick: () -> Unit
+) {
+    val backgroundColor = if (!isRead) {
+        MaterialTheme.colorScheme.surfaceVariant
+    } else {
+        Color.Transparent
+    }
+
+    val titleColor =
+        if (!isRead) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+    val messageColor = if (!isRead) MaterialTheme.colorScheme.onSurface else Color.Gray
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .clip(RoundedCornerShape(16.dp))
+            .background(backgroundColor)
+            .clickable { onClick() }
+            .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
                 .size(44.dp)
-                .background(color.copy(alpha = 0.1f), CircleShape),
+                .background(iconColor.copy(alpha = 0.1f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            AppIcons.MyIcon(resourceId = icon, tint = color, size = 20.dp)
+            AppIcons.MyIcon(
+                resourceId = icon,
+                tint = if (!isRead) iconColor else Color.Gray,
+                size = 20.dp
+            )
         }
+
         Spacer(modifier = Modifier.width(16.dp))
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.bodyLarge
+                fontWeight = if (!isRead) FontWeight.ExtraBold else FontWeight.SemiBold,
+                style = MaterialTheme.typography.bodyLarge,
+                color = titleColor
             )
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = messageColor,
+                fontWeight = if (!isRead) FontWeight.Medium else FontWeight.Normal
+            )
+        }
+        if (!isRead) {
+            Spacer(modifier = Modifier.width(12.dp))
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .background(Color.Red, CircleShape)
             )
         }
     }

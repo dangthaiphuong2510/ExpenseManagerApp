@@ -27,12 +27,16 @@ fun IconPickerDialog(
         onDismissRequest = onDismiss,
         confirmButton = {},
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Close") }
+            TextButton(onClick = onDismiss) { Text("Close", color = themeColor) }
         },
         title = {
-            Text(text = "Select Icon", fontWeight = FontWeight.Bold)
+            Text(
+                text = "Select Icon",
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         },
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.surface,
         text = {
             LazyColumn(
                 modifier = Modifier
@@ -46,8 +50,9 @@ fun IconPickerDialog(
                             Text(
                                 text = groupName,
                                 style = MaterialTheme.typography.labelLarge,
-                                color = Color.Gray
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            Spacer(modifier = Modifier.height(8.dp))
                             icons.chunked(5).forEach { rowIcons ->
                                 Row(
                                     Modifier.fillMaxWidth(),
@@ -60,17 +65,20 @@ fun IconPickerDialog(
                                                 .size(48.dp)
                                                 .clip(RoundedCornerShape(12.dp))
                                                 .background(
-                                                    if (isSelected) themeColor.copy(0.2f) else Color(
-                                                        0xFFF5F5F5
-                                                    )
+                                                    if (isSelected) themeColor.copy(alpha = 0.2f)
+                                                    else MaterialTheme.colorScheme.surfaceVariant
                                                 )
-                                                .clickable { onIconSelected(iconKey); onDismiss() },
+                                                .clickable {
+                                                    onIconSelected(iconKey)
+                                                    onDismiss()
+                                                },
                                             contentAlignment = Alignment.Center
                                         ) {
                                             AppIcons.MyIcon(
                                                 resourceId = resId,
                                                 size = 24.dp,
-                                                tint = if (isSelected) themeColor else Color.DarkGray
+                                                tint = if (isSelected) themeColor
+                                                else MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
                                     }

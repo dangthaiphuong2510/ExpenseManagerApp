@@ -12,6 +12,14 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.Auth
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.compose.auth.ComposeAuth
+import io.github.jan.supabase.compose.auth.composeAuth
+import io.github.jan.supabase.compose.auth.googleNativeLogin
+import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.postgrest.Postgrest
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -74,5 +82,32 @@ object NetworkModule {
     @Singleton
     fun provideApiService(retrofit: Retrofit): ApiService {
         return retrofit.create(ApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSupabaseClient(): SupabaseClient {
+        return createSupabaseClient(
+            supabaseUrl = "https://fonstswwxrjxjcyjqbns.supabase.co",
+            supabaseKey = "sb_publishable_uJPQO3tWFZhH1n44LnNeqQ_Wpm0oCKZ"
+        ) {
+            install(Auth)
+            install(Postgrest)
+            install(ComposeAuth) {
+                googleNativeLogin(serverClientId = "946070829662-h144ugcgbgkbo008n0lj958m7hb0kubt.apps.googleusercontent.com")
+            }
+        }
+    }
+
+    @Provides
+    @Singleton
+    fun provideSupabaseAuth(client: SupabaseClient): Auth {
+        return client.auth
+    }
+
+    @Provides
+    @Singleton
+    fun provideComposeAuth(client: SupabaseClient): ComposeAuth {
+        return client.composeAuth
     }
 }

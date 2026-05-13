@@ -1,17 +1,29 @@
 package com.example.expensemanager.feature.category
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.expensemanager.R
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
@@ -35,6 +47,9 @@ fun CategoryScreen(
     var showManage by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
 
+    var pendingCategoryData by remember { mutableStateOf<Triple<String, String, Boolean>?>(null) }
+    var showSaveOptionDialog by remember { mutableStateOf(false) }
+
     var categoryToEdit by remember { mutableStateOf<CategoryItem?>(null) }
     var categoryToDelete by remember { mutableStateOf<String?>(null) }
     var selectedCategoryName by remember { mutableStateOf("") }
@@ -51,9 +66,11 @@ fun CategoryScreen(
         viewModel.saveSuccess.collect {
             showTransactionForm = false
             showAddCategory = false
+            showSaveOptionDialog = false
             categoryToEdit = null
             transactionToEdit = null
             transactionNoteError = null
+            pendingCategoryData = null
 
             if (isSelectionMode) {
                 onBack()
@@ -130,6 +147,38 @@ fun CategoryScreen(
         }
     }
 
+    if (showSaveOptionDialog && pendingCategoryData != null) {
+        AlertDialog(
+            onDismissRequest = { showSaveOptionDialog = false },
+            title = { Text("Save Category") },
+            text = {
+                Text(
+                    "Do you want to save this category permanently or only for ${
+                        currentMonth.format(
+                            DateTimeFormatter.ofPattern("MM/yyyy")
+                        )
+                    }?"
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val (name, icon, isExp) = pendingCategoryData!!
+                    viewModel.addNewCategory(name, icon, isExp, isPermanent = true)
+                }) {
+                    Text("Permanently")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    val (name, icon, isExp) = pendingCategoryData!!
+                    viewModel.addNewCategory(name, icon, isExp, isPermanent = false)
+                }) {
+                    Text("This month only")
+                }
+            }
+        )
+    }
+
     CategoryDialogContainer(
         showManage = showManage,
         showAdd = showAddCategory,
@@ -143,6 +192,8 @@ fun CategoryScreen(
         selectedCategoryName = selectedCategoryName,
         selectedTab = selectedTab,
         datePickerState = datePickerState,
+        selectedMonth = uiState.selectedMonth,
+        selectedYear = uiState.selectedYear,
         displayList = uiState.categories,
         noteError = transactionNoteError,
         transactionsForCategory = uiState.allTransactions.filter {
@@ -158,13 +209,15 @@ fun CategoryScreen(
                     transactionToEdit = null
                     transactionNoteError = null
                 }
+
                 showHistory -> showHistory = false
                 showDatePicker -> showDatePicker = false
                 showManage -> showManage = false
             }
         },
         onConfirmAdd = { name, icon, isExp ->
-            viewModel.addNewCategory(name, icon, isExp)
+            pendingCategoryData = Triple(name, icon, isExp)
+            showSaveOptionDialog = true
         },
         onConfirmEdit = { item, newName, newIcon, newIsExp ->
             if (newName.isNotEmpty()) {
@@ -183,8 +236,7 @@ fun CategoryScreen(
             viewModel.deleteCategory(name)
             categoryToDelete = null
         },
-        onReorderCategory = { newList ->
-        },
+        onReorderCategory = { _ -> },
         onAddNewCategoryFromManage = {
             showAddCategory = true
         },

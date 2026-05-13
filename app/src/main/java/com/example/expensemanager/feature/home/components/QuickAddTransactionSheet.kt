@@ -3,8 +3,6 @@ package com.example.expensemanager.feature.home.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -14,12 +12,16 @@ import com.example.expensemanager.feature.category.CategoryGrid
 import com.example.expensemanager.feature.category.CategoryItem
 import com.example.expensemanager.feature.category.CategoryTabRow
 import com.example.expensemanager.feature.category.categorydialogui.CategoryTransactionFormUI
+import java.util.Calendar
 
 @Composable
 fun QuickAddTransactionSheet(
     categories: List<CategoryItem>,
     categoryTotals: Map<String, Double>,
     currencyCode: String,
+    selectedMonth: Int = Calendar.getInstance().get(Calendar.MONTH) + 1,
+    selectedYear: Int = Calendar.getInstance().get(Calendar.YEAR),
+
     onConfirm: (amount: Double, note: String, date: Long, category: String, isExpense: Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -90,6 +92,9 @@ fun QuickAddTransactionSheet(
             categoryName = selectedCategoryName!!,
             currencyCode = currencyCode,
             isExpense = selectedTab == 0,
+            selectedMonth = selectedMonth,
+            selectedYear = selectedYear,
+
             noteError = null,
             onDismiss = { selectedCategoryName = null },
             onConfirm = { amount, note, date ->

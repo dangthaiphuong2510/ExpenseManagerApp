@@ -1,7 +1,7 @@
 package com.example.expensemanager.di
 
 import com.example.expensemanager.data.remote.repository.AppRepository
-import com.example.expensemanager.data.remote.repository.AppRepositoryImpl
+import com.example.expensemanager.data.remote.repository.impl.AppRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

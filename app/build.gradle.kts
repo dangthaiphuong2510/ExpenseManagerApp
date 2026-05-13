@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.google.services)
+    kotlin("plugin.serialization") version "1.9.23"
 }
 
 android {
@@ -93,49 +93,41 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
 
-    // JSON
+    val ktorVersion = "3.0.0"
+    implementation("io.ktor:ktor-client-core:$ktorVersion")
+    implementation("io.ktor:ktor-client-android:$ktorVersion")
+
+    // Supabase Ecosystem
+    implementation(platform(libs.supabase.bom))
+    implementation(libs.supabase.auth)
+    implementation(libs.supabase.postgrest)
+    implementation(libs.supabase.compose.auth)
+
+    // JSON & Serialization
     implementation(libs.moshi.kotlin)
     ksp(libs.moshi.kotlin.codegen)
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
-    // Chucker
-    debugImplementation(libs.chucker.debug)
-    releaseImplementation(libs.chucker.release)
-
-    //Icon
+    // Icons, Image, Logging
     implementation("androidx.compose.material:material-icons-extended")
-
-    // Image
     implementation(libs.coil.compose)
-
-    // Logging
     implementation(libs.timber)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.core)
 
-    // Unit Testing
-    testImplementation(libs.junit)
-    testImplementation(libs.kotest.runner.junit5)
-    testImplementation(libs.kotest.property)
-    testImplementation(libs.kotest.assertions.core)
-    testImplementation(libs.mockk)
-    testImplementation(libs.turbine)
-    testImplementation(libs.kotlinx.coroutines.test)
-
-    //Room database
+    // Room database
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
-    //Firebase
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.auth)
-    implementation(libs.kotlinx.coroutines.play.services)
-
-    implementation("com.google.android.gms:play-services-auth:21.3.0")
-
-    // Android Testing
+    // Testing
+    testImplementation(libs.junit)
+    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.mockk)
+    testImplementation(libs.turbine)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(platform(libs.compose.bom))
@@ -143,13 +135,14 @@ dependencies {
     androidTestImplementation(libs.hilt.android.testing)
 
     // Debug
+    debugImplementation(libs.chucker.debug)
+    releaseImplementation(libs.chucker.release)
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
 }
 
 configurations.all {
     resolutionStrategy {
-        // Force versions from Version Catalog to avoid conflicts
         force(libs.kotlinx.coroutines.core.get().toString())
         force(libs.kotlinx.coroutines.android.get().toString())
     }

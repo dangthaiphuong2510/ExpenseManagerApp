@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.expensemanager.data.local.datastore.CurrencyManager
 import com.example.expensemanager.data.remote.repository.AppRepository
+import com.example.expensemanager.data.remote.repository.impl.SyncRepoImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -12,7 +13,7 @@ import java.util.*
 import javax.inject.Inject
 
 data class TransactionItem(
-    val id: Int,
+    val id: String,
     val amount: Double,
     val note: String,
     val date: Long,
@@ -42,7 +43,8 @@ data class CategoryUiState(
 @HiltViewModel
 class CategoryViewModel @Inject constructor(
     private val repository: AppRepository,
-    private val currencyManager: CurrencyManager
+    private val currencyManager: CurrencyManager,
+    private val syncRepo: SyncRepoImpl
 ) : ViewModel() {
 
     private val calendar = Calendar.getInstance()
@@ -56,12 +58,39 @@ class CategoryViewModel @Inject constructor(
     val saveSuccess = _saveSuccess.asSharedFlow()
 
     init {
-        checkAndSeedCategories()
+        viewModelScope.launch {
+            android.util.Log.d("DEBUG_FLOW", "Đang tự động Sync khi mở màn hình Category...")
+            syncRepo.syncCloudData()
+        }
     }
 
     fun setMonthYear(month: Int, year: Int) {
         _selectedMonth.value = month
         _selectedYear.value = year
+    }
+
+    fun previousMonth() {
+        var m = _selectedMonth.value
+        var y = _selectedYear.value
+        if (m == 1) {
+            m = 12
+            y -= 1
+        } else {
+            m -= 1
+        }
+        setMonthYear(m, y)
+    }
+
+    fun nextMonth() {
+        var m = _selectedMonth.value
+        var y = _selectedYear.value
+        if (m == 12) {
+            m = 1
+            y += 1
+        } else {
+            m += 1
+        }
+        setMonthYear(m, y)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -72,10 +101,14 @@ class CategoryViewModel @Inject constructor(
     ) { month, year, symbol ->
         Triple(month, year, symbol)
     }.flatMapLatest { (month, year, symbol) ->
+
+        val userId = repository.getCurrentUserId() ?: ""
+
         combine(
-            repository.getTransactionsByMonth(month, year),
-            repository.getAllCategories()
+            repository.getTransactionsByMonth(month, year, userId),
+            repository.getCategoriesByTime(month, year, userId)
         ) { transactions, categories ->
+
             val income = transactions.filter { it.type == "INCOME" }.sumOf { it.amount }
             val expense = transactions.filter { it.type == "EXPENSE" }.sumOf { it.amount }
 
@@ -130,75 +163,87 @@ class CategoryViewModel @Inject constructor(
                 category = category,
                 categoryIcon = iconName,
                 type = if (isExpense) "EXPENSE" else "INCOME"
-            ).collect {
-                _saveSuccess.emit(Unit)
+            ).collect { result ->
+                result.onSuccess {
+                    _saveSuccess.emit(Unit)
+                }.onFailure { e ->
+                    _errorEvent.emit("Offline saved! Cloud sync waiting: ${e.message}")
+                }
             }
         }
     }
 
-    fun updateTransaction(id: Int, amount: Double, note: String, dateMillis: Long) {
+    fun updateTransaction(id: String, amount: Double, note: String, dateMillis: Long) {
         viewModelScope.launch {
             if (note.trim().isEmpty()) {
                 _errorEvent.emit("Note cannot be empty!")
                 return@launch
             }
-
             val oldTx = uiState.value.allTransactions.find { it.id == id }
             if (oldTx != null) {
-                repository.deleteTransactionById(id)
+                val userId = repository.getCurrentUserId() ?: ""
+
+                repository.deleteTransactionById(id, userId)
                 addTransaction(
-                    amount = amount,
-                    category = oldTx.category,
-                    note = note.trim(),
-                    isExpense = oldTx.type == "EXPENSE",
-                    dateMillis = dateMillis
+                    amount,
+                    oldTx.category,
+                    note.trim(),
+                    oldTx.type == "EXPENSE",
+                    dateMillis
                 )
             }
         }
     }
 
-    fun deleteTransaction(id: Int) = viewModelScope.launch {
-        repository.deleteTransactionById(id)
+    fun deleteTransaction(id: String) = viewModelScope.launch {
+        val userId = repository.getCurrentUserId() ?: ""
+        repository.deleteTransactionById(id, userId)
         _saveSuccess.emit(Unit)
     }
 
     fun updateCategory(oldName: String, newName: String, newIcon: String, isExpense: Boolean) {
         viewModelScope.launch {
+            val userId = repository.getCurrentUserId() ?: ""
+
             if (oldName != newName) {
-                repository.updateTransactionCategoryName(oldName, newName)
+                repository.updateTransactionCategoryName(oldName, newName, userId)
             }
-            repository.updateTransactionIconByCategory(newName, newIcon)
-            repository.deleteCategory(oldName)
-            repository.addCategory(newName, newIcon, isExpense)
+            repository.updateTransactionIconByCategory(newName, newIcon, userId)
+            repository.deleteCategory(oldName, userId)
+
+            // Cần truyền userId vào hàm addCategory
+            repository.addCategory(newName, newIcon, isExpense, null, null, userId)
+
             _saveSuccess.emit(Unit)
         }
     }
 
     fun deleteCategory(name: String) = viewModelScope.launch {
-        repository.deleteTransactionsByCategory(name)
-        repository.deleteCategory(name)
+        val userId = repository.getCurrentUserId() ?: ""
+
+        repository.deleteTransactionsByCategory(name, userId)
+        repository.deleteCategory(name, userId)
+
         _saveSuccess.emit(Unit)
     }
 
-    fun addNewCategory(name: String, iconName: String, isExpense: Boolean) =
+    fun addNewCategory(name: String, iconName: String, isExpense: Boolean, isPermanent: Boolean) {
         viewModelScope.launch {
-            repository.addCategory(name, iconName, isExpense)
-            _saveSuccess.emit(Unit)
-        }
+            val userId = repository.getCurrentUserId() ?: ""
 
-    private fun checkAndSeedCategories() {
-        viewModelScope.launch {
-            repository.getAllCategories().take(1).collect { current ->
-                if (current.isEmpty()) {
-                    val defaults = listOf(
-                        CategoryItem("Food", "ic_food", true),
-                        CategoryItem("Transport", "ic_transport", true),
-                        CategoryItem("Salary", "ic_money", false),
-                        CategoryItem("Home", "ic_home", true)
-                    )
-                    defaults.forEach { repository.addCategory(it.name, it.iconName, it.isExpense) }
-                }
+            if (isPermanent) {
+                repository.addCategory(name, iconName, isExpense, null, null, userId)
+            } else {
+                repository.addCategory(
+                    name,
+                    iconName,
+                    isExpense,
+                    _selectedMonth.value,
+                    _selectedYear.value,
+                    userId
+                )
             }
+            _saveSuccess.emit(Unit)
         }
     }
 }
